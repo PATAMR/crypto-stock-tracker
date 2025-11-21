@@ -3,46 +3,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto & Stock Tracker Premium</title>
+    <title>Crypto & Stock Tracker | Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300,400,600,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: linear-gradient(135deg, #0f172a 0%, #020617 100%); color: #f8fafc; font-family: Outfit, sans-serif; min-height: 100vh; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
-        header { margin-bottom: 50px; text-align: center; }
-        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
-        .assets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-        .asset-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; padding: 25px; }
-        .asset-card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.1); }
-        .var-positive { color: #34d399; }
-        .var-negative { color: #f87171; }
+        /* 1. VARIABLES & RESET */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --glow-green: 0 0 20px rgba(52, 211, 153, 0.15);
+            --glow-red: 0 0 20px rgba(248, 113, 113, 0.15);
+            --font-main: 'Outfit', sans-serif;
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            cursor: default; /* On changera le curseur via JS si besoin */
+        }
+
+        /* Curseur personnalisé (optionnel, pour l'immersion) */
+        .cursor-dot {
+            width: 8px; height: 8px; background: var(--accent-blue);
+            border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999;
+            transition: transform 0.1s;
+        }
+
+        /* 2. LAYOUT & CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            margin-bottom: 50px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeDown 0.8s ease-out forwards;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        /* 3. CONTROLS (Search & Filter) */
+        .controls-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .search-container {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: white;
+            font-family: var(--font-main);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .filter-pill {
+            padding: 10px 20px;
+            border-radius: 30px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .filter-pill:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+        .filter-pill.active {
+            background: var(--accent-blue);
+            color: #0f172a;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+
+        /* 4. GRID SYSTEM */
+        .assets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            perspective: 1000px; /* Pour effet 3D au hover */
+        }
+
+        /* 5. ASSET CARD (Glassmorphism) */
+        .asset-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s forwards;
+        }
+
+        .asset-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+        }
+
+        .asset-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            opacity: 0; transition: 0.3s;
+        }
+        .asset-card:hover::before { opacity: 1; }
+
+        /* Header de la carte */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .icon-box {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .asset-info h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+        .asset-info span { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Prix et Variations */
+        .price-block { margin-bottom: 20px; }
+        
+        .current-price {
+            font-size: 2rem;
+            font-weight: 700;
+            display: block;
+            letter-spacing: -0.5px;
+        }
+
+        .variation-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .var-positive { background: rgba(52, 211, 153, 0.1); color: var(--accent-green); border: 1px solid rgba(52, 211, 153, 0.2); }
+        .var-negative { background: rgba(248, 113, 113, 0.1); color: var(--accent-red); border: 1px solid rgba(248, 113, 113, 0.2); }
+        .var-neutral { background: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
+
+        /* Graphique */
+        .chart-container {
+            height: 80px;
+            width: 100%;
+            position: relative;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+        }
+
+        /* Glow Effects Condtionnels */
+        .glow-up:hover { box-shadow: var(--glow-green), inset 0 0 20px rgba(52, 211, 153, 0.05); }
+        .glow-down:hover { box-shadow: var(--glow-red), inset 0 0 20px rgba(248, 113, 113, 0.05); }
+
+        /* 6. ANIMATIONS KEYFRAMES */
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 7. RESPONSIVE */
+        @media (max-width: 768px) {
+            .assets-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 2rem; }
+            .controls-wrapper { flex-direction: column; align-items: center; }
+            .search-container { width: 100%; }
+            .filter-pill { width: 100%; text-align: center; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Portfolio Tracker</h1>
-            <p>Real-time crypto and stock monitoring</p>
-        </header>
-        <div class="assets-grid" id="gridContainer"></div>
-    </div>
-    <script>
-        const assets = [
-            { name: 'Bitcoin', type: 'crypto', price: 745.14, change: -312.22 },
-            { name: 'Ethereum', type: 'crypto', price: 113.47, change: -89.24 },
-            { name: 'Apple', type: 'stock', price: 236.85, change: 35.15 },
-            { name: 'Amazon', type: 'stock', price: 192.22, change: -2.48 }
-        ];
-        const grid = document.getElementById('gridContainer');
-        assets.forEach(item => {
+
+<div class="cursor-dot" id="cursor"></div>
+
+<div class="container">
+    <header>
+        <h1>Tableau de Bord <span style="color: var(--accent-blue)">Portfolio</span></h1>
+        <p style="color: var(--text-muted)">Suivi en temps réel des marchés financiers & cryptos</p>
+        
+        <div class="controls-wrapper">
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Rechercher un actif...">
+            </div>
+            <div id="filters">
+                <span class="filter-pill active" data-filter="all">Tout</span>
+                <span class="filter-pill" data-filter="action">Actions</span>
+                <span class="filter-pill" data-filter="crypto">Cryptos</span>
+                <span class="filter-pill" data-filter="fonds">Fonds</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="assets-grid" id="gridContainer">
+        </div>
+</div>
+
+<script>
+    // 1. DONNÉES
+    const assets = [
+        { name: "Bitcoin", type: "crypto", price: 745.14, change: -312.22, icon: "fa-brands fa-bitcoin", color: "#f7931a" },
+        { name: "Core S&P 500", type: "fonds", price: 617.74, change: 28.50, icon: "fa-solid fa-chart-line", color: "#38bdf8" },
+        { name: "Apple", type: "action", price: 236.85, change: 35.15, icon: "fa-brands fa-apple", color: "#fff" },
+        { name: "Amazon", type: "action", price: 192.22, change: -2.48, icon: "fa-brands fa-amazon", color: "#ff9900" },
+        { name: "NVIDIA", type: "action", price: 158.86, change: 6.74, icon: "fa-solid fa-microchip", color: "#76b900" },
+        { name: "Ethereum", type: "crypto", price: 113.47, change: -89.24, icon: "fa-brands fa-ethereum", color: "#627eea" },
+        { name: "Solana", type: "crypto", price: 111.40, change: 0.00, icon: "fa-solid fa-layer-group", color: "#14f195" },
+        { name: "MSCi World Energy", type: "fonds", price: 47.00, change: 1.84, icon: "fa-solid fa-globe", color: "#38bdf8" },
+        { name: "TotalEnergies", type: "action", price: 41.40, change: 1.40, icon: "fa-solid fa-bolt", color: "#e31d1d" },
+        { name: "Alphabet (A)", type: "action", price: 6.68, change: 1.68, icon: "fa-brands fa-google", color: "#4285f4" }
+    ];
+
+    // 2. UTILITAIRES & FORMATAGE
+    const formatCurrency = (num) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(num);
+    
+    // Fonction d'animation des nombres (Performance: requestAnimationFrame)
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Easing function (easeOutQuad)
+            const easeProgress = 1 - (1 - progress) * (1 - progress);
+            
+            // Interpolation de la valeur
+            const currentVal = (progress * (end - start) + start);
+            obj.innerHTML = formatCurrency(currentVal);
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Génération de données factices lissées pour les courbes
+    function generateSmoothedData(currentPrice, change, points = 20) {
+        let data = [];
+        let price = currentPrice - change;
+        for(let i = 0; i < points; i++) {
+            data.push(price);
+            // Random walk avec tendance vers le prix final
+            let trend = (currentPrice - price) / (points - i);
+            price += trend + (Math.random() * 4 - 2); 
+        }
+        data.push(currentPrice);
+        return data;
+    }
+
+    // 3. LOGIQUE DE RENDU (CORE)
+    const grid = document.getElementById('gridContainer');
+    let chartInstances = []; // Gestion mémoire des charts
+
+    function renderCards(dataItems) {
+        grid.innerHTML = '';
+        // Cleanup charts
+        chartInstances.forEach(c => c.destroy());
+        chartInstances = [];
+
+        dataItems.forEach((item, index) => {
+            const percent = item.change === 0 ? 0 : ((item.change / (item.price - item.change)) * 100);
             const isPositive = item.change > 0;
+            const isNeutral = item.change === 0;
+            
+            // Classes dynamiques
+            const varClass = isNeutral ? 'var-neutral' : (isPositive ? 'var-positive' : 'var-negative');
+            const glowClass = isNeutral ? '' : (isPositive ? 'glow-up' : 'glow-down');
+            const iconArrow = isNeutral ? 'minus' : (isPositive ? 'arrow-trend-up' : 'arrow-trend-down');
+            
+            // Construction de la carte
             const card = document.createElement('div');
-            card.className = 'asset-card';
-            card.innerHTML = `<h3>${item.name}</h3><p>${item.type}</p><p>€${item.price.toFixed(2)}</p><p class="${isPositive ? 'var-positive' : 'var-negative'}">${isPositive ? '+' : ''}€${item.change.toFixed(2)}</p>`;
+            card.className = `asset-card ${glowClass}`;
+            // Staggered animation delay
+            card.style.animationDelay = `${index * 0.05}s`;
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="icon-box" style="color: ${item.color}; border-color: ${item.color}33; background: ${item.color}11">
+                        <i class="${item.icon}"></i>
+                    </div>
+                    <div class="asset-info" style="text-align: right">
+                        <h3>${item.name}</h3>
+                        <span>${item.type}</span>
+                    </div>
+                </div>
+                
+                <div class="price-block">
+                    <span class="current-price" id="price-${index}">0,00 €</span>
+                    <div class="variation-tag ${varClass}">
+                        <i class="fa-solid fa-${iconArrow}"></i>
+                        <span>${item.change > 0 ? '+' : ''}${formatCurrency(item.change)} (${Math.abs(percent).toFixed(2)}%)</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="chart-${index}"></canvas>
+                </div>
+            `;
+            
             grid.appendChild(card);
+
+            // 1. Lancer l'animation du prix
+            const priceEl = document.getElementById(`price-${index}`);
+            // Petit délai pour que ce soit agréable
+            setTimeout(() => {
+                animateValue(priceEl, 0, item.price, 1500);
+            }, 100 + (index * 50));
+
+            // 2. Création du graphique
+            createMiniChart(index, item);
         });
-    </script>
+    }
+
+    // 4. CHART.JS CONFIGURATION OPTIMISÉE
+    function createMiniChart(index, item) {
+        const ctx = document.getElementById(`chart-${index}`).getContext('2d');
+        const chartColor = item.change >= 0 ? '#34d399' : '#f87171';
+        const gradient = ctx.createLinearGradient(0, 0, 0, 80);
+        
+        if (item.change === 0) {
+            gradient.addColorStop(0, 'rgba(148, 163, 184, 0.2)');
+            gradient.addColorStop(1, 'rgba(148, 163, 184, 0)');
+        } else {
+            gradient.addColorStop(0, item.change > 0 ? 'rgba(52, 211, 153, 0.2)' : 'rgba(248, 113, 113, 0.2)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        }
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(21).fill(''),
+                datasets: [{
+                    data: generateSmoothedData(item.price, item.change),
+                    borderColor: item.change === 0 ? '#94a3b8' : chartColor,
+                    borderWidth: 2,
+                    tension: 0.4, // Courbe de Bézier fluide
+                    pointRadius: 0,
+                    fill: true,
+                    backgroundColor: gradient
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { 
+                    x: { display: false }, 
+                    y: { display: false, min: Math.min(item.price, item.price-item.change) * 0.95 } 
+                },
+                animation: { duration: 2000, easing: 'easeOutQuart' }
+            }
+        });
+        chartInstances.push(chart);
+    }
+
+    // 5. INTERACTIONS (Filtres & Recherche)
+    const filterBtns = document.querySelectorAll('.filter-pill');
+    const searchInput = document.getElementById('searchInput');
+    let activeFilter = 'all';
+
+    // Gestionnaire de clics filtres
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Visuel boutons
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Logique
+            activeFilter = btn.dataset.filter;
+            applyFilters();
+        });
+    });
+
+    // Gestionnaire de recherche
+    searchInput.addEventListener('input', applyFilters);
+
+    function applyFilters() {
+        const term = searchInput.value.toLowerCase();
+        
+        const filtered = assets.filter(item => {
+            const matchesType = activeFilter === 'all' || item.type === activeFilter;
+            const matchesSearch = item.name.toLowerCase().includes(term);
+            return matchesType && matchesSearch;
+        });
+
+        renderCards(filtered);
+    }
+
+    // Curseur suiveur (Effet bonus)
+    document.addEventListener('mousemove', (e) => {
+        const cursor = document.getElementById('cursor');
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
+
+    // Initialisation
+    renderCards(assets);
+
+</script>
 </body>
 </html>
