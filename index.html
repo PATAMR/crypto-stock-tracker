@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto & Stock Tracker Premium</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300,400,600,700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: linear-gradient(135deg, #0f172a 0%, #020617 100%); color: #f8fafc; font-family: Outfit, sans-serif; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+        header { margin-bottom: 50px; text-align: center; }
+        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+        .assets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .asset-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; padding: 25px; }
+        .asset-card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.1); }
+        .var-positive { color: #34d399; }
+        .var-negative { color: #f87171; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Portfolio Tracker</h1>
+            <p>Real-time crypto and stock monitoring</p>
+        </header>
+        <div class="assets-grid" id="gridContainer"></div>
+    </div>
+    <script>
+        const assets = [
+            { name: 'Bitcoin', type: 'crypto', price: 745.14, change: -312.22 },
+            { name: 'Ethereum', type: 'crypto', price: 113.47, change: -89.24 },
+            { name: 'Apple', type: 'stock', price: 236.85, change: 35.15 },
+            { name: 'Amazon', type: 'stock', price: 192.22, change: -2.48 }
+        ];
+        const grid = document.getElementById('gridContainer');
+        assets.forEach(item => {
+            const isPositive = item.change > 0;
+            const card = document.createElement('div');
+            card.className = 'asset-card';
+            card.innerHTML = `<h3>${item.name}</h3><p>${item.type}</p><p>€${item.price.toFixed(2)}</p><p class="${isPositive ? 'var-positive' : 'var-negative'}">${isPositive ? '+' : ''}€${item.change.toFixed(2)}</p>`;
+            grid.appendChild(card);
+        });
+    </script>
+</body>
+</html>
