@@ -2,695 +2,805 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulateur Pro | Apprendre à Investir</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NovaTrade | Premium Investment App</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        /* --- 1. DESIGN SYSTEM & VARIABLES --- */
         :root {
-            --bg-dark: #0f172a;
-            --bg-panel: #1e293b;
-            --bg-card: rgba(30, 41, 59, 0.6);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #38bdf8;
-            --accent-green: #10b981;
+            --bg-body: #050505; /* Noir profond OLED */
+            --bg-sidebar: #0A0A0A;
+            --bg-card: #121212;
+            --bg-glass: rgba(20, 20, 20, 0.7);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --primary: #3B82F6; /* Bleu électrique */
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --accent-green: #22c55e;
             --accent-red: #ef4444;
-            --border: rgba(255,255,255,0.08);
-            --shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            --text-main: #ffffff;
+            --text-muted: #737373;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --font-main: 'Inter', sans-serif;
+            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; font-family: 'Outfit', sans-serif; }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-body);
             color: var(--text-main);
-            min-height: 100vh;
-            overflow-x: hidden;
-            padding-bottom: 50px;
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden; /* App feel */
+            display: flex;
         }
 
-        /* --- HEADER & DASHBOARD --- */
-        .top-bar {
-            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            position: sticky; top: 0; z-index: 100;
-            padding: 15px 20px;
+        /* --- 2. SIDEBAR (NAVIGATION) --- */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-subtle);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            z-index: 100;
         }
 
-        .header-content {
-            max-width: 1200px; margin: 0 auto;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+        .brand {
+            font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 12px;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
+        .brand i { font-size: 1.8rem; color: var(--primary); -webkit-text-fill-color: initial; }
 
-        .logo h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+        .nav-links { display: flex; flex-direction: column; gap: 8px; }
         
-        .account-summary {
-            display: flex; gap: 20px; background: var(--bg-panel);
-            padding: 8px 20px; border-radius: 30px; border: 1px solid var(--border);
+        .nav-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
         }
-        
-        .acc-item span { display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
-        .acc-item strong { font-size: 1.1rem; color: var(--text-main); }
-        .acc-item.highlight strong { color: var(--accent-blue); }
+        .nav-item i { font-size: 1.3rem; }
+        .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text-main); }
+        .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
 
-        .reset-btn {
-            background: transparent; border: 1px solid var(--border); color: var(--text-muted);
-            padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: 0.3s;
-        }
-        .reset-btn:hover { border-color: var(--accent-red); color: var(--accent-red); }
-
-        /* --- NAVIGATION TABS --- */
-        .nav-tabs {
-            display: flex; justify-content: center; gap: 10px; margin: 30px 0;
-        }
-        .tab-btn {
-            background: transparent; border: none; color: var(--text-muted);
-            padding: 10px 25px; font-size: 1rem; cursor: pointer; position: relative;
-            transition: 0.3s; font-weight: 600;
-        }
-        .tab-btn.active { color: var(--accent-blue); }
-        .tab-btn.active::after {
-            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
-            width: 30px; height: 3px; background: var(--accent-blue); border-radius: 2px;
+        /* --- 3. MAIN CONTENT AREA --- */
+        .main-content {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+            padding: 0;
+            scroll-behavior: smooth;
         }
 
-        /* --- MAIN CONTAINER --- */
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-        .view-section { display: none; animation: fadeIn 0.4s ease; }
-        .view-section.active { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- MARKET GRID --- */
-        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        
-        .asset-card {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
-            padding: 20px; transition: transform 0.3s, border-color 0.3s; position: relative; overflow: hidden;
-        }
-        .asset-card:hover { transform: translateY(-5px); border-color: rgba(56, 189, 248, 0.3); }
-        
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        .asset-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .asset-price { text-align: right; }
-        .price-val { font-size: 1.4rem; font-weight: 700; display: block; }
-        .price-var { font-size: 0.85rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
-        
-        .pos-indicator { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
-
-        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-buy { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .btn-buy:hover { background: var(--accent-green); color: #fff; }
-        .btn-sell { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
-        .btn-sell:hover { background: var(--accent-red); color: #fff; }
-        .btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
-
-        /* --- PORTFOLIO VIEW --- */
-        .portfolio-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
-        .portfolio-table { width: 100%; border-collapse: collapse; }
-        .portfolio-table th { text-align: left; color: var(--text-muted); padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        .portfolio-table td { padding: 15px; border-bottom: 1px solid var(--border); }
-        .chart-box { background: var(--bg-card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); height: fit-content; }
-
-        /* --- HISTORY VIEW --- */
-        .history-list { display: flex; flex-direction: column; gap: 10px; }
-        .history-item {
+        /* Header Sticky */
+        .app-header {
+            position: sticky; top: 0; z-index: 90;
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
             display: flex; justify-content: space-between; align-items: center;
-            background: var(--bg-card); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-subtle);
         }
-        .tx-info h4 { font-size: 1rem; margin-bottom: 3px; }
-        .tx-info span { font-size: 0.8rem; color: var(--text-muted); }
-        .tx-amount { font-weight: 700; }
-        .type-buy { color: var(--accent-green); }
-        .type-sell { color: var(--accent-red); }
 
-        /* --- MODAL --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center; z-index: 1000;
-            opacity: 0; pointer-events: none; transition: 0.3s;
+        .search-container {
+            position: relative; width: 350px;
         }
-        .modal-overlay.open { opacity: 1; pointer-events: all; }
-        
-        .modal-content {
-            background: #1e293b; width: 90%; max-width: 400px;
-            padding: 30px; border-radius: 24px; border: 1px solid var(--border);
-            transform: translateY(20px); transition: 0.3s; box-shadow: var(--shadow);
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .search-input {
+            width: 100%; background: var(--bg-card); border: 1px solid var(--border-subtle);
+            padding: 12px 12px 12px 45px; border-radius: 30px; color: white; outline: none;
+            transition: 0.3s; font-family: var(--font-main);
         }
-        .modal-overlay.open .modal-content { transform: translateY(0); }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
-        .modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
+        .user-balance-pill {
+            background: var(--bg-card); border: 1px solid var(--border-subtle);
+            padding: 8px 16px; border-radius: 30px; display: flex; align-items: center; gap: 10px;
+        }
+        .balance-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .balance-val { font-weight: 600; color: var(--primary); }
+
+        /* --- 4. DASHBOARD & VIEWS --- */
+        .view-container {
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: none;
+            animation: fadeScale 0.4s var(--ease-bounce);
+        }
+        .view-container.active { display: block; }
+
+        @keyframes fadeScale { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        /* Portfolio Section */
+        .portfolio-hero {
+            display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-bottom: 40px;
+        }
         
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; }
+        .balance-card {
+            background: linear-gradient(135deg, #1e1e1e 0%, #0f0f0f 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            position: relative; overflow: hidden;
+        }
+        /* Subtle glow effect */
+        .balance-card::after {
+            content: ''; position: absolute; top: -50%; right: -20%; width: 300px; height: 300px;
+            background: var(--primary); filter: blur(100px); opacity: 0.15; border-radius: 50%;
+        }
+
+        .total-label { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px; }
+        .total-amount { font-size: 3.5rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 20px; }
+        .pnl-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;
+        }
+        .pnl-up { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+        .pnl-down { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+
+        .chart-container {
+            background: var(--bg-card); border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg); padding: 25px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- 5. ASSET GRID & CARDS --- */
+        .category-nav {
+            display: flex; gap: 12px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px;
+        }
+        .cat-pill {
+            padding: 10px 20px; border-radius: 30px; background: var(--bg-card);
+            border: 1px solid var(--border-subtle); color: var(--text-muted);
+            cursor: pointer; transition: 0.3s; white-space: nowrap; font-weight: 500;
+        }
+        .cat-pill:hover, .cat-pill.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .assets-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+        }
+
+        .asset-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .asset-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.2);
+            background: #181818;
+        }
+
+        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .asset-identity { display: flex; align-items: center; gap: 12px; }
+        .asset-icon-box {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+            background: rgba(255,255,255,0.05);
+        }
+        .asset-names h4 { font-size: 1rem; font-weight: 600; margin-bottom: 2px; }
+        .asset-names span { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+
+        .sparkline-wrapper {
+            height: 50px; width: 100%; margin: 10px 0;
+            position: relative; opacity: 0.7; transition: opacity 0.3s;
+        }
+        .asset-card:hover .sparkline-wrapper { opacity: 1; }
+        
+        /* SVG Sparkline */
+        .sparkline-svg { width: 100%; height: 100%; overflow: visible; }
+        .sparkline-path { fill: none; stroke-width: 2; stroke-linecap: round; }
+
+        .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+        .price-large { font-size: 1.2rem; font-weight: 700; }
+        .change-pill { font-size: 0.8rem; font-weight: 600; }
+
+        .live-dot {
+            width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%;
+            position: absolute; top: 20px; right: 20px;
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        /* --- 6. MODAL (TRADING) --- */
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            z-index: 200; opacity: 0; pointer-events: none; transition: 0.3s;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modal-backdrop.active { opacity: 1; pointer-events: all; }
+
+        .trade-modal {
+            background: #151515; border: 1px solid var(--border-subtle);
+            width: 100%; max-width: 450px; border-radius: var(--radius-lg);
+            padding: 30px; transform: translateY(50px); transition: 0.4s var(--ease-bounce);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-backdrop.active .trade-modal { transform: translateY(0); }
+
+        .modal-header { text-align: center; margin-bottom: 30px; }
+        .modal-asset-icon { font-size: 3rem; margin-bottom: 10px; display: inline-block; }
+        .modal-price { font-size: 2.5rem; font-weight: 700; margin: 10px 0; font-variant-numeric: tabular-nums; }
+
+        .trade-tabs {
+            display: flex; background: rgba(255,255,255,0.05); padding: 4px;
+            border-radius: 12px; margin-bottom: 25px;
+        }
+        .trade-tab {
+            flex: 1; text-align: center; padding: 10px; border-radius: 8px;
+            font-weight: 600; cursor: pointer; transition: 0.2s; color: var(--text-muted);
+        }
+        .trade-tab.active-buy { background: var(--bg-card); color: var(--accent-green); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .trade-tab.active-sell { background: var(--bg-card); color: var(--accent-red); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+
+        .input-wrapper { position: relative; margin-bottom: 20px; }
         .amount-input {
-            width: 100%; background: #0f172a; border: 1px solid var(--border);
-            padding: 15px; border-radius: 12px; color: white; font-size: 1.5rem; font-weight: 700;
+            width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--border-subtle);
+            padding: 10px 0; font-size: 2rem; color: white; font-weight: 600; text-align: center; outline: none;
         }
-        .input-helper { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.8rem; color: var(--text-muted); }
+        .amount-input:focus { border-color: var(--primary); }
 
-        .confirm-btn {
-            width: 100%; padding: 15px; border-radius: 12px; border: none;
-            font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px;
+        .action-btn {
+            width: 100%; padding: 18px; border-radius: 16px; border: none;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: transform 0.1s;
+            color: white; text-transform: uppercase; letter-spacing: 1px;
         }
+        .btn-buy-style { background: var(--accent-green); box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        .btn-sell-style { background: var(--accent-red); box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .action-btn:active { transform: scale(0.98); }
 
-        /* --- NOTIFICATIONS --- */
-        .toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
-        .toast {
-            background: #1e293b; color: white; padding: 15px 25px; border-radius: 12px;
-            box-shadow: var(--shadow); border-left: 4px solid; animation: slideIn 0.3s; display: flex; align-items: center; gap: 10px;
-        }
-        .toast-success { border-color: var(--accent-green); }
-        .toast-error { border-color: var(--accent-red); }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-        /* Colors helper */
-        .c-green { color: var(--accent-green); }
-        .c-red { color: var(--accent-red); }
-        .bg-green { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
-        .bg-red { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
-
-        /* Responsive */
+        /* --- 7. MOBILE RESPONSIVE --- */
         @media (max-width: 768px) {
-            .portfolio-layout { grid-template-columns: 1fr; }
-            .account-summary { width: 100%; justify-content: space-between; }
-            .header-content { flex-direction: column; align-items: flex-start; }
+            body { flex-direction: column; }
+            .sidebar { display: none; } /* Hide desktop sidebar */
+            
+            .mobile-nav {
+                display: flex; position: fixed; bottom: 0; width: 100%;
+                background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(15px);
+                border-top: 1px solid var(--border-subtle); z-index: 100;
+                justify-content: space-around; padding: 15px 10px 25px 10px;
+            }
+            .mobile-nav-item {
+                display: flex; flex-direction: column; align-items: center; gap: 5px;
+                color: var(--text-muted); font-size: 0.7rem;
+            }
+            .mobile-nav-item i { font-size: 1.5rem; }
+            .mobile-nav-item.active { color: var(--primary); }
+
+            .view-container { padding: 20px 15px 100px 15px; }
+            .portfolio-hero { grid-template-columns: 1fr; }
+            .app-header { padding: 15px; }
+            .search-container { width: 200px; }
+            .total-amount { font-size: 2.5rem; }
+            
+            .trade-modal { position: absolute; bottom: 0; border-radius: 24px 24px 0 0; max-width: 100%; transform: translateY(100%); margin: 0; }
         }
+
+        @media (min-width: 769px) {
+            .mobile-nav { display: none; }
+        }
+
+        /* Utility Animations */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <div class="header-content">
-        <div class="logo">
-            <h1><i class="fa-solid fa-chart-simple" style="color: var(--accent-blue)"></i> SimuTrade</h1>
+    <nav class="sidebar">
+        <div class="brand">
+            <i class="ph-fill ph-planet"></i> NovaTrade
         </div>
-        <div class="account-summary">
-            <div class="acc-item highlight">
-                <span>Liquidités</span>
-                <strong id="disp-cash">10 000,00 €</strong>
+        <div class="nav-links">
+            <div class="nav-item active" onclick="switchView('market')">
+                <i class="ph ph-trend-up"></i> Marché
             </div>
-            <div class="acc-item">
-                <span>Valeur Portefeuille</span>
-                <strong id="disp-invested">0,00 €</strong>
+            <div class="nav-item" onclick="switchView('portfolio')">
+                <i class="ph ph-wallet"></i> Portefeuille
             </div>
-            <div class="acc-item">
-                <span>Total (Net Worth)</span>
-                <strong id="disp-total">10 000,00 €</strong>
+            <div class="nav-item" onclick="switchView('history')">
+                <i class="ph ph-clock-counter-clockwise"></i> Historique
             </div>
         </div>
-        <button class="reset-btn" onclick="resetPortfolio()"><i class="fas fa-rotate-right"></i> Reset</button>
-    </div>
-</div>
+    </nav>
 
-<div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('market')">Marché</button>
-    <button class="tab-btn" onclick="switchTab('portfolio')">Mon Portefeuille</button>
-    <button class="tab-btn" onclick="switchTab('history')">Historique</button>
-</div>
-
-<div class="container">
-    
-    <div id="market" class="view-section active">
-        <div class="market-grid" id="market-grid">
+    <main class="main-content">
+        
+        <header class="app-header">
+            <div class="search-container">
+                <i class="ph ph-magnifying-glass search-icon"></i>
+                <input type="text" class="search-input" id="globalSearch" placeholder="Rechercher un actif (Apple, BTC...)" oninput="filterMarket()">
             </div>
-    </div>
+            <div class="user-balance-pill">
+                <span class="balance-label">Cash</span>
+                <span class="balance-val" id="headerCash">10 000 €</span>
+            </div>
+        </header>
 
-    <div id="portfolio" class="view-section">
-        <div class="portfolio-layout">
-            <div class="assets-list">
-                <table class="portfolio-table">
-                    <thead>
-                        <tr>
-                            <th>Actif</th>
-                            <th>Qté</th>
-                            <th>Prix Moyen</th>
-                            <th>Valeur Actuelle</th>
-                            <th>Gain/Perte</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="portfolio-body">
-                        </tbody>
-                </table>
-                <div id="empty-portfolio" style="padding: 40px; text-align: center; color: var(--text-muted); display: none;">
-                    Vous n'avez aucun actif. Allez sur le marché pour investir !
+        <div id="market" class="view-container active">
+            <div class="category-nav">
+                <div class="cat-pill active" onclick="filterCat('all', this)">Tout</div>
+                <div class="cat-pill" onclick="filterCat('Crypto', this)">Cryptos</div>
+                <div class="cat-pill" onclick="filterCat('Tech', this)">Tech US</div>
+                <div class="cat-pill" onclick="filterCat('Finance', this)">Finance</div>
+                <div class="cat-pill" onclick="filterCat('Luxe', this)">Luxe</div>
+                <div class="cat-pill" onclick="filterCat('Conso', this)">Conso</div>
+            </div>
+            <div class="assets-grid" id="marketGrid">
+                </div>
+        </div>
+
+        <div id="portfolio" class="view-container">
+            <div class="portfolio-hero">
+                <div class="balance-card">
+                    <div class="total-label">Valeur Totale Estimée</div>
+                    <div class="total-amount" id="totalBalance">10 000,00 €</div>
+                    <div class="pnl-badge pnl-up" id="globalPnl">
+                        <i class="ph-bold ph-arrow-up-right"></i> +0.00% (Aujourd'hui)
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="portfolioChart" width="200" height="200"></canvas>
                 </div>
             </div>
-            <div class="chart-box">
-                <h3 style="margin-bottom: 20px;">Répartition</h3>
-                <canvas id="portfolioChart"></canvas>
+            
+            <h3 style="margin-bottom: 20px; font-weight: 600;">Vos Actifs</h3>
+            <div class="assets-grid" id="portfolioGrid">
+                </div>
+        </div>
+
+        <div id="history" class="view-container">
+            <h3 style="margin-bottom: 20px;">Historique des Transactions</h3>
+            <div id="historyList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+
+    </main>
+
+    <nav class="mobile-nav">
+        <div class="mobile-nav-item active" onclick="switchView('market', this)">
+            <i class="ph ph-trend-up"></i> Marché
+        </div>
+        <div class="mobile-nav-item" onclick="switchView('portfolio', this)">
+            <i class="ph ph-wallet"></i> Portefeuille
+        </div>
+        <div class="mobile-nav-item" onclick="switchView('history', this)">
+            <i class="ph ph-clock-counter-clockwise"></i> Historique
+        </div>
+    </nav>
+
+    <div class="modal-backdrop" id="tradeModalOverlay">
+        <div class="trade-modal">
+            <div class="modal-header">
+                <div class="modal-asset-icon" id="modalIcon"></div>
+                <h2 id="modalTitle">Bitcoin</h2>
+                <div class="modal-price" id="modalPrice">54,320 €</div>
             </div>
+
+            <div class="trade-tabs">
+                <div class="trade-tab active-buy" id="tabBuy" onclick="setTradeMode('buy')">Acheter</div>
+                <div class="trade-tab" id="tabSell" onclick="setTradeMode('sell')">Vendre</div>
+            </div>
+
+            <div class="input-wrapper">
+                <input type="number" class="amount-input" id="tradeAmount" placeholder="0" inputmode="decimal">
+                <div style="text-align: center; color: var(--text-muted); margin-top: 5px; font-size: 0.8rem;" id="tradeHelper">
+                    Dispo: 10 000 €
+                </div>
+            </div>
+
+            <button class="action-btn btn-buy-style" id="confirmTradeBtn" onclick="executeTrade()">Confirmer Achat</button>
+            <button style="width: 100%; background: transparent; border: none; color: var(--text-muted); padding: 15px; margin-top: 10px; cursor: pointer;" onclick="closeModal()">Annuler</button>
         </div>
     </div>
-
-    <div id="history" class="view-section">
-        <div class="history-list" id="history-list">
-            </div>
-        <div id="empty-history" style="padding: 40px; text-align: center; color: var(--text-muted);">
-            Aucune transaction effectuée.
-        </div>
-    </div>
-
-</div>
-
-<div class="modal-overlay" id="tradeModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">Acheter Bitcoin</h3>
-            <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
-        </div>
-        
-        <div class="input-group">
-            <label id="inputLabel">Montant à investir (€)</label>
-            <input type="number" class="amount-input" id="tradeAmount" placeholder="0.00" oninput="calculateTrade()">
-            <div class="input-helper">
-                <span id="helperBalance">Dispo: 10 000 €</span>
-                <span id="helperQty">Est. Qté: 0.0000</span>
-            </div>
-        </div>
-
-        <button class="confirm-btn" id="confirmTradeBtn">Confirmer l'ordre</button>
-    </div>
-</div>
-
-<div class="toast-container" id="toastContainer"></div>
 
 <script>
-    // --- 1. ÉTAT DE L'APPLICATION (STATE) ---
-    const defaultState = {
-        cash: 10000,
-        holdings: {}, // { 'btc': { qty: 0.5, avgPrice: 50000 } }
-        history: []   // [{ date, type, assetId, amount, price, qty }]
-    };
-
-    // Chargement depuis localStorage ou valeurs par défaut
-    let userState = JSON.parse(localStorage.getItem('simuState')) || defaultState;
-
-    // Données Marché (Live + Mock)
-    const marketData = [
-        { id: 'btc', name: 'Bitcoin', symbol: 'BTC', type: 'crypto', price: 74514, color: '#f7931a', icon: 'fa-brands fa-bitcoin', binance: 'btceur' },
-        { id: 'eth', name: 'Ethereum', symbol: 'ETH', type: 'crypto', price: 2450, color: '#627eea', icon: 'fa-brands fa-ethereum', binance: 'etheur' },
-        { id: 'sol', name: 'Solana', symbol: 'SOL', type: 'crypto', price: 111, color: '#14f195', icon: 'fa-solid fa-layer-group', binance: 'soleur' },
-        { id: 'sp500', name: 'S&P 500', symbol: 'SPX', type: 'stock', price: 5000, color: '#38bdf8', icon: 'fa-solid fa-chart-line' },
-        { id: 'aapl', name: 'Apple', symbol: 'AAPL', type: 'stock', price: 182, color: '#fff', icon: 'fa-brands fa-apple' },
-        { id: 'nvda', name: 'NVIDIA', symbol: 'NVDA', type: 'stock', price: 880, color: '#76b900', icon: 'fa-solid fa-microchip' },
-        { id: 'tsla', name: 'Tesla', symbol: 'TSLA', type: 'stock', price: 175, color: '#e31937', icon: 'fa-solid fa-car-bolt' },
-        { id: 'total', name: 'TotalEnergies', symbol: 'TTE', type: 'stock', price: 62, color: '#e31d1d', icon: 'fa-solid fa-bolt' }
+    // --- DATA & STATE ---
+    const db = [
+        // Cryptos
+        { id: 'btc', name: 'Bitcoin', sym: 'BTC', cat: 'Crypto', price: 74500, icon: 'ph-currency-btc', color: '#f7931a', binance: 'btceur' },
+        { id: 'eth', name: 'Ethereum', sym: 'ETH', cat: 'Crypto', price: 2450, icon: 'ph-diamond', color: '#627eea', binance: 'etheur' },
+        { id: 'sol', name: 'Solana', sym: 'SOL', cat: 'Crypto', price: 110, icon: 'ph-lightning', color: '#14f195', binance: 'soleur' },
+        { id: 'xrp', name: 'Ripple', sym: 'XRP', cat: 'Crypto', price: 0.55, icon: 'ph-waves', color: '#00aae4', binance: 'xrpeur' },
+        // Tech
+        { id: 'aapl', name: 'Apple', sym: 'AAPL', cat: 'Tech', price: 182, icon: 'ph-apple-logo', color: '#A2AAAD' },
+        { id: 'msft', name: 'Microsoft', sym: 'MSFT', cat: 'Tech', price: 420, icon: 'ph-windows-logo', color: '#00a4ef' },
+        { id: 'nvda', name: 'Nvidia', sym: 'NVDA', cat: 'Tech', price: 880, icon: 'ph-cpu', color: '#76b900' },
+        { id: 'tsla', name: 'Tesla', sym: 'TSLA', cat: 'Tech', price: 175, icon: 'ph-car', color: '#e31937' },
+        { id: 'amzn', name: 'Amazon', sym: 'AMZN', cat: 'Tech', price: 178, icon: 'ph-shopping-cart', color: '#ff9900' },
+        { id: 'goog', name: 'Alphabet', sym: 'GOOGL', cat: 'Tech', price: 165, icon: 'ph-google-logo', color: '#4285f4' },
+        // Finance & Luxe
+        { id: 'jpm', name: 'JPMorgan', sym: 'JPM', cat: 'Finance', price: 195, icon: 'ph-bank', color: '#fff' },
+        { id: 'mc', name: 'LVMH', sym: 'MC', cat: 'Luxe', price: 850, icon: 'ph-handbag', color: '#d4af37' },
+        { id: 'rms', name: 'Hermès', sym: 'RMS', cat: 'Luxe', price: 2300, icon: 'ph-horse', color: '#f37021' },
+        { id: 'ko', name: 'Coca-Cola', sym: 'KO', cat: 'Conso', price: 60, icon: 'ph-brandy', color: '#f40009' }
     ];
 
-    let currentTrade = { type: 'buy', assetId: null };
-    let portfolioChartInstance = null;
+    // Generate Sparkline History for everyone
+    db.forEach(a => {
+        a.history = Array(20).fill(0).map((_, i) => a.price * (1 + (Math.random() * 0.1 - 0.05)));
+        a.history[19] = a.price; // ensure last point is current
+    });
 
-    // --- 2. INITIALISATION & RENDU ---
+    let state = JSON.parse(localStorage.getItem('novaState')) || { cash: 10000, holdings: {}, history: [] };
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let activeAssetId = null;
+    let tradeMode = 'buy';
+    let chartInstance = null;
+
+    // --- INIT ---
     function init() {
-        renderHeader();
         renderMarket();
-        renderPortfolio();
-        renderHistory();
-        startLiveUpdates();
+        updateHeader();
+        startLiveSimulation();
     }
 
-    function saveState() {
-        localStorage.setItem('simuState', JSON.stringify(userState));
-        renderHeader(); // Met à jour les totaux
-    }
-
-    function resetPortfolio() {
-        if(confirm("Voulez-vous vraiment réinitialiser tout votre portefeuille et repartir à 10 000€ ?")) {
-            userState = JSON.parse(JSON.stringify(defaultState)); // Deep copy
-            saveState();
-            location.reload();
-        }
-    }
-
-    // --- 3. MOTEUR DE TRADING (ACHAT/VENTE) ---
-
-    function openTradeModal(type, assetId) {
-        currentTrade = { type, assetId };
-        const asset = marketData.find(a => a.id === assetId);
-        const modal = document.getElementById('tradeModal');
-        const btn = document.getElementById('confirmTradeBtn');
-        const title = document.getElementById('modalTitle');
-        const input = document.getElementById('tradeAmount');
-        const label = document.getElementById('inputLabel');
-        const balanceHelper = document.getElementById('helperBalance');
-
-        modal.classList.add('open');
-        input.value = '';
-        document.getElementById('helperQty').innerText = '';
-
-        if (type === 'buy') {
-            title.innerText = `Acheter ${asset.name}`;
-            title.style.color = 'var(--accent-green)';
-            btn.innerText = 'Confirmer l\'achat';
-            btn.style.background = 'var(--accent-green)';
-            label.innerText = 'Montant à investir (€)';
-            balanceHelper.innerText = `Dispo: ${formatEuro(userState.cash)}`;
-        } else {
-            title.innerText = `Vendre ${asset.name}`;
-            title.style.color = 'var(--accent-red)';
-            btn.innerText = 'Confirmer la vente';
-            btn.style.background = 'var(--accent-red)';
-            label.innerText = 'Montant à retirer (€)';
-            
-            // Calculer la valeur max vendable
-            const holding = userState.holdings[assetId];
-            const maxVal = holding ? holding.qty * asset.price : 0;
-            balanceHelper.innerText = `Valeur max: ${formatEuro(maxVal)}`;
-        }
-
-        input.focus();
-    }
-
-    function closeModal() {
-        document.getElementById('tradeModal').classList.remove('open');
-    }
-
-    function calculateTrade() {
-        const amount = parseFloat(document.getElementById('tradeAmount').value);
-        const asset = marketData.find(a => a.id === currentTrade.assetId);
-        const qtyHelper = document.getElementById('helperQty');
-
-        if (!amount || amount <= 0) {
-            qtyHelper.innerText = '';
-            return;
-        }
-
-        const qty = amount / asset.price;
-        qtyHelper.innerText = `Est. Qté: ${qty.toFixed(6)} ${asset.symbol}`;
-    }
-
-    document.getElementById('confirmTradeBtn').addEventListener('click', executeTrade);
-
-    function executeTrade() {
-        const amount = parseFloat(document.getElementById('tradeAmount').value);
-        const asset = marketData.find(a => a.id === currentTrade.assetId);
+    // --- SPARKLINE GENERATOR (SVG) ---
+    function getSparkline(history, color) {
+        const min = Math.min(...history);
+        const max = Math.max(...history);
+        const range = max - min || 1;
         
-        if (!amount || amount <= 0) return showToast("Montant invalide", "error");
+        // Points mapping to 100x50 viewbox
+        const points = history.map((val, i) => {
+            const x = (i / (history.length - 1)) * 100;
+            const y = 50 - ((val - min) / range) * 50;
+            return `${x},${y}`;
+        });
+        
+        const isUp = history[history.length-1] >= history[0];
+        const strokeColor = isUp ? 'var(--accent-green)' : 'var(--accent-red)';
 
-        if (currentTrade.type === 'buy') {
-            // LOGIQUE ACHAT
-            if (amount > userState.cash) return showToast("Fonds insuffisants !", "error");
-
-            // Calcul PRU (Prix de Revient Unitaire)
-            const qty = amount / asset.price;
-            const currentHolding = userState.holdings[asset.id] || { qty: 0, avgPrice: 0 };
-            
-            // Nouveau prix moyen pondéré
-            const totalCostOld = currentHolding.qty * currentHolding.avgPrice;
-            const totalCostNew = amount; // = qty * price
-            const newAvgPrice = (totalCostOld + totalCostNew) / (currentHolding.qty + qty);
-
-            userState.holdings[asset.id] = {
-                qty: currentHolding.qty + qty,
-                avgPrice: newAvgPrice
-            };
-            userState.cash -= amount;
-            
-            addHistory('Achat', asset, qty, amount, asset.price);
-            showToast(`Achat de ${qty.toFixed(4)} ${asset.symbol} réussi !`, "success");
-
-        } else {
-            // LOGIQUE VENTE
-            const holding = userState.holdings[asset.id];
-            if (!holding) return showToast("Vous ne possédez pas cet actif", "error");
-            
-            const maxVal = holding.qty * asset.price;
-            if (amount > maxVal + 0.01) return showToast("Solde d'actif insuffisant", "error"); // +0.01 pour arrondi
-
-            const qtyToSell = amount / asset.price;
-            
-            userState.holdings[asset.id].qty -= qtyToSell;
-            if (userState.holdings[asset.id].qty < 0.000001) delete userState.holdings[asset.id]; // Nettoyage si vide
-            
-            userState.cash += amount;
-
-            // Calcul Profit/Perte
-            const initialCost = qtyToSell * holding.avgPrice;
-            const profit = amount - initialCost;
-
-            addHistory('Vente', asset, qtyToSell, amount, asset.price, profit);
-            showToast(`Vente réussie ! ${profit >= 0 ? 'Gain' : 'Perte'}: ${formatEuro(profit)}`, profit >= 0 ? "success" : "error");
-        }
-
-        saveState();
-        closeModal();
-        renderHeader();
-        renderPortfolio(); // Met à jour le tableau
+        return `
+            <svg class="sparkline-svg" viewBox="0 0 100 50" preserveAspectRatio="none">
+                <polyline points="${points.join(' ')}" 
+                    fill="none" 
+                    stroke="${strokeColor}" 
+                    stroke-width="2" 
+                    vector-effect="non-scaling-stroke" />
+            </svg>
+        `;
     }
 
-    function addHistory(type, asset, qty, total, price, profit = 0) {
-        const tx = {
-            date: new Date().toISOString(),
-            type,
-            assetName: asset.name,
-            qty,
-            total,
-            price,
-            profit
-        };
-        userState.history.unshift(tx); // Ajoute au début
-        renderHistory();
-    }
+    // --- RENDER FUNCTIONS ---
+    function formatMoney(n) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n); }
 
-    // --- 4. GESTION DE L'INTERFACE (UI RENDERING) ---
-
-    function renderHeader() {
-        const holdingsValue = calculateHoldingsValue();
-        const totalValue = userState.cash + holdingsValue;
-
-        animateValue(document.getElementById('disp-cash'), userState.cash);
-        animateValue(document.getElementById('disp-invested'), holdingsValue);
-        animateValue(document.getElementById('disp-total'), totalValue);
+    function updateHeader() {
+        document.getElementById('headerCash').innerText = formatMoney(state.cash);
     }
 
     function renderMarket() {
-        const grid = document.getElementById('market-grid');
+        const grid = document.getElementById('marketGrid');
         grid.innerHTML = '';
+        
+        const filtered = db.filter(a => {
+            const matchCat = currentFilter === 'all' || a.cat === currentFilter;
+            const matchSearch = a.name.toLowerCase().includes(currentSearch) || a.sym.toLowerCase().includes(currentSearch);
+            return matchCat && matchSearch;
+        });
 
-        marketData.forEach(asset => {
-            const card = document.createElement('div');
-            card.className = 'asset-card';
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="asset-icon" style="color: ${asset.color}; background: ${asset.color}15">
-                        <i class="${asset.icon}"></i>
-                    </div>
-                    <div class="asset-price">
-                        <span class="price-val" id="price-${asset.id}">${formatEuro(asset.price)}</span>
-                        <span class="price-var bg-green" id="var-${asset.id}">+0.00%</span>
+        filtered.forEach(a => {
+            // Calc variation
+            const start = a.history[0];
+            const end = a.price;
+            const change = ((end - start) / start) * 100;
+            const colorClass = change >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+            const sign = change >= 0 ? '+' : '';
+
+            const el = document.createElement('div');
+            el.className = 'asset-card';
+            el.onclick = () => openTrade(a.id);
+            el.innerHTML = `
+                <div class="live-dot" ${a.cat === 'Crypto' ? '' : 'style="display:none"'} id="dot-${a.id}"></div>
+                <div class="card-top">
+                    <div class="asset-identity">
+                        <div class="asset-icon-box" style="color:${a.color}">
+                            <i class="ph-fill ${a.icon}"></i>
+                        </div>
+                        <div class="asset-names">
+                            <h4>${a.sym}</h4>
+                            <span>${a.name}</span>
+                        </div>
                     </div>
                 </div>
-                <div class="pos-indicator">
-                    ${asset.name} (${asset.symbol})
+                <div class="sparkline-wrapper">
+                    ${getSparkline(a.history, a.color)}
                 </div>
-                <div class="action-buttons">
-                    <button class="btn btn-buy" onclick="openTradeModal('buy', '${asset.id}')">ACHETER</button>
-                    <button class="btn btn-sell" onclick="openTradeModal('sell', '${asset.id}')">VENDRE</button>
+                <div class="card-bottom">
+                    <div class="price-large" id="price-${a.id}">${formatMoney(a.price)}</div>
+                    <div class="change-pill" style="color:${colorClass}">${sign}${change.toFixed(2)}%</div>
                 </div>
             `;
-            grid.appendChild(card);
+            grid.appendChild(el);
         });
     }
 
     function renderPortfolio() {
-        const tbody = document.getElementById('portfolio-body');
-        const emptyMsg = document.getElementById('empty-portfolio');
-        tbody.innerHTML = '';
-
-        const assetIds = Object.keys(userState.holdings);
+        const grid = document.getElementById('portfolioGrid');
+        const totalEl = document.getElementById('totalBalance');
+        grid.innerHTML = '';
         
-        if (assetIds.length === 0) {
-            emptyMsg.style.display = 'block';
-            if(portfolioChartInstance) portfolioChartInstance.destroy();
-            return;
-        }
-        emptyMsg.style.display = 'none';
+        let totalHoldingsVal = 0;
+        const chartLabels = [];
+        const chartData = [];
+        const chartColors = [];
 
-        let labels = [];
-        let data = [];
-        let colors = [];
-
-        assetIds.forEach(id => {
-            const holding = userState.holdings[id];
-            const asset = marketData.find(a => a.id === id);
+        Object.keys(state.holdings).forEach(id => {
+            const h = state.holdings[id];
+            const asset = db.find(a => a.id === id);
             if(!asset) return;
+            
+            const val = h.qty * asset.price;
+            totalHoldingsVal += val;
 
-            const currentVal = holding.qty * asset.price;
-            const initialVal = holding.qty * holding.avgPrice;
-            const diff = currentVal - initialVal;
-            const percent = ((currentVal - initialVal) / initialVal) * 100;
+            chartLabels.push(asset.sym);
+            chartData.push(val);
+            chartColors.push(asset.color);
 
-            // Données pour le graphique
-            labels.push(asset.name);
-            data.push(currentVal);
-            colors.push(asset.color);
+            const pl = val - (h.qty * h.avg);
+            const plP = (pl / (h.qty * h.avg)) * 100;
 
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><div style="display:flex; align-items:center; gap:10px"><i class="${asset.icon}" style="color:${asset.color}"></i> <b>${asset.name}</b></div></td>
-                <td>${holding.qty.toFixed(4)}</td>
-                <td>${formatEuro(holding.avgPrice)}</td>
-                <td><b>${formatEuro(currentVal)}</b></td>
-                <td>
-                    <span class="${diff >= 0 ? 'bg-green c-green' : 'bg-red c-red'}" style="padding:4px 8px; border-radius:6px; font-weight:bold; font-size:0.85rem">
-                        ${diff >= 0 ? '+' : ''}${percent.toFixed(2)}%
-                    </span>
-                </td>
-                <td>
-                    <button class="btn-sell" style="padding:5px 10px; border-radius:6px; border:1px solid var(--accent-red); background:transparent; cursor:pointer" onclick="openTradeModal('sell', '${id}')">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <button class="btn-buy" style="padding:5px 10px; border-radius:6px; border:1px solid var(--accent-green); background:transparent; cursor:pointer" onclick="openTradeModal('buy', '${id}')">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </td>
+            const el = document.createElement('div');
+            el.className = 'asset-card';
+            el.onclick = () => openTrade(id);
+            el.innerHTML = `
+                <div class="card-top">
+                    <div class="asset-identity">
+                        <div class="asset-icon-box" style="color:${asset.color}">
+                            <i class="ph-fill ${asset.icon}"></i>
+                        </div>
+                        <div class="asset-names">
+                            <h4>${asset.name}</h4>
+                            <span>${h.qty.toFixed(4)} Unités</span>
+                        </div>
+                    </div>
+                    <div style="text-align:right">
+                        <div style="font-weight:700">${formatMoney(val)}</div>
+                        <div style="font-size:0.8rem; color:${pl>=0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                            ${pl>=0 ? '+' : ''}${formatMoney(pl)}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-bottom" style="margin-top:10px">
+                    <span style="font-size:0.8rem; color:var(--text-muted)">Prix moy: ${formatMoney(h.avg)}</span>
+                </div>
             `;
-            tbody.appendChild(row);
+            grid.appendChild(el);
         });
 
-        renderPieChart(labels, data, colors);
-    }
-
-    function renderPieChart(labels, data, colors) {
-        const ctx = document.getElementById('portfolioChart').getContext('2d');
-        if(portfolioChartInstance) portfolioChartInstance.destroy();
-
-        portfolioChartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: colors,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom', labels: { color: '#94a3b8' } }
+        // Update Global Dashboard
+        const grandTotal = state.cash + totalHoldingsVal;
+        totalEl.innerText = formatMoney(grandTotal);
+        
+        // Render Chart
+        const ctx = document.getElementById('portfolioChart');
+        if(chartInstance) chartInstance.destroy();
+        
+        if(totalHoldingsVal > 0) {
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    cutout: '70%'
                 }
-            }
-        });
+            });
+        }
     }
 
     function renderHistory() {
-        const list = document.getElementById('history-list');
-        const empty = document.getElementById('empty-history');
+        const list = document.getElementById('historyList');
         list.innerHTML = '';
-
-        if(userState.history.length === 0) {
-            empty.style.display = 'block';
-            return;
-        }
-        empty.style.display = 'none';
-
-        userState.history.forEach(tx => {
-            const date = new Date(tx.date).toLocaleDateString('fr-FR', { hour: '2-digit', minute:'2-digit' });
+        [...state.history].reverse().forEach(tx => {
             const isBuy = tx.type === 'Achat';
-            const pl = tx.profit ? `<span class="${tx.profit >= 0 ? 'c-green' : 'c-red'}">(${tx.profit > 0 ? '+' : ''}${formatEuro(tx.profit)})</span>` : '';
-
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `
-                <div class="tx-info">
-                    <h4 class="${isBuy ? 'type-buy' : 'type-sell'}">${tx.type.toUpperCase()} ${tx.assetName}</h4>
-                    <span>${date} • ${tx.qty.toFixed(4)} unités à ${formatEuro(tx.price)}</span>
+            const el = document.createElement('div');
+            el.style.cssText = `
+                background: var(--bg-card); padding: 15px; border-radius: 16px; 
+                display: flex; justify-content: space-between; align-items: center;
+                border: 1px solid var(--border-subtle);
+            `;
+            el.innerHTML = `
+                <div style="display:flex; gap:12px; align-items:center">
+                    <div style="width:36px; height:36px; background:${isBuy ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:${isBuy ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                        <i class="ph-bold ${isBuy ? 'ph-arrow-down-left' : 'ph-arrow-up-right'}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600">${tx.type} ${tx.sym}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted)">${new Date(tx.date).toLocaleString()}</div>
+                    </div>
                 </div>
-                <div class="tx-amount">
-                    ${formatEuro(tx.total)} ${pl}
+                <div style="text-align:right">
+                    <div style="font-weight:700">${formatMoney(tx.total)}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted)">${tx.qty.toFixed(4)} à ${formatMoney(tx.price)}</div>
                 </div>
             `;
-            list.appendChild(item);
+            list.appendChild(el);
         });
     }
 
-    // --- 5. UTILITAIRES & LIVE DATA ---
+    // --- TRADING LOGIC ---
+    function openTrade(id) {
+        activeAssetId = id;
+        const asset = db.find(a => a.id === id);
+        
+        document.getElementById('modalTitle').innerText = asset.name;
+        document.getElementById('modalIcon').innerHTML = `<i class="ph-fill ${asset.icon}" style="color:${asset.color}"></i>`;
+        document.getElementById('modalPrice').innerText = formatMoney(asset.price);
+        document.getElementById('tradeAmount').value = '';
+        
+        setTradeMode('buy'); // Default
+        document.getElementById('tradeModalOverlay').classList.add('active');
+        document.getElementById('tradeAmount').focus();
+    }
 
-    function calculateHoldingsValue() {
-        let total = 0;
-        for (const [id, holding] of Object.entries(userState.holdings)) {
-            const asset = marketData.find(a => a.id === id);
-            if(asset) total += holding.qty * asset.price;
+    function closeModal() {
+        document.getElementById('tradeModalOverlay').classList.remove('active');
+        activeAssetId = null;
+    }
+
+    function setTradeMode(mode) {
+        tradeMode = mode;
+        const btn = document.getElementById('confirmTradeBtn');
+        const helper = document.getElementById('tradeHelper');
+        const tabBuy = document.getElementById('tabBuy');
+        const tabSell = document.getElementById('tabSell');
+        const asset = db.find(a => a.id === activeAssetId);
+
+        if(mode === 'buy') {
+            tabBuy.className = 'trade-tab active-buy';
+            tabSell.className = 'trade-tab';
+            btn.className = 'action-btn btn-buy-style';
+            btn.innerText = `Acheter ${asset.sym}`;
+            helper.innerText = `Cash Dispo: ${formatMoney(state.cash)}`;
+        } else {
+            tabBuy.className = 'trade-tab';
+            tabSell.className = 'trade-tab active-sell';
+            btn.className = 'action-btn btn-sell-style';
+            btn.innerText = `Vendre ${asset.sym}`;
+            const h = state.holdings[asset.id];
+            const val = h ? h.qty * asset.price : 0;
+            helper.innerText = `Valeur détenue: ${formatMoney(val)}`;
         }
-        return total;
     }
 
-    function switchTab(tabId) {
-        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    function executeTrade() {
+        const amount = parseFloat(document.getElementById('tradeAmount').value);
+        if(!amount || amount <= 0) return;
+        const asset = db.find(a => a.id === activeAssetId);
+
+        if(tradeMode === 'buy') {
+            if(amount > state.cash) return alert("Fonds insuffisants");
+            const qty = amount / asset.price;
+            
+            // Logic Average Price
+            const h = state.holdings[asset.id] || { qty: 0, avg: 0 };
+            const newTotal = (h.qty * h.avg) + amount;
+            const newQty = h.qty + qty;
+            
+            state.holdings[asset.id] = { qty: newQty, avg: newTotal / newQty };
+            state.cash -= amount;
+            state.history.push({ date: Date.now(), type: 'Achat', sym: asset.sym, qty: qty, price: asset.price, total: amount });
+        } else {
+            const h = state.holdings[asset.id];
+            if(!h) return alert("Aucun actif");
+            const maxVal = h.qty * asset.price;
+            if(amount > maxVal + 1) return alert("Solde insuffisant");
+            
+            const qty = amount / asset.price;
+            h.qty -= qty;
+            if(h.qty < 0.00001) delete state.holdings[asset.id];
+            
+            state.cash += amount;
+            state.history.push({ date: Date.now(), type: 'Vente', sym: asset.sym, qty: qty, price: asset.price, total: amount });
+        }
+
+        localStorage.setItem('novaState', JSON.stringify(state));
+        closeModal();
+        updateHeader();
+        if(document.getElementById('portfolio').classList.contains('active')) renderPortfolio();
+    }
+
+    // --- NAVIGATION ---
+    function switchView(viewId, navItem) {
+        // Hide all
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        // Show One
+        document.getElementById(viewId).classList.add('active');
         
-        document.getElementById(tabId).classList.add('active');
-        event.target.classList.add('active');
+        // Desktop Nav Active
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        // Find index based on viewId for desktop (simplified)
+        // Mobile Nav Active
+        if(navItem) {
+            document.querySelectorAll('.mobile-nav-item').forEach(el => el.classList.remove('active'));
+            navItem.classList.add('active');
+        }
 
-        if(tabId === 'portfolio') renderPortfolio(); // Refresh pour MAJ prix
+        if(viewId === 'portfolio') renderPortfolio();
+        if(viewId === 'history') renderHistory();
+        if(viewId === 'market') renderMarket();
     }
 
-    function formatEuro(num) {
-        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(num);
+    function filterCat(cat, el) {
+        currentFilter = cat;
+        document.querySelectorAll('.cat-pill').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+        renderMarket();
     }
 
-    function animateValue(obj, end) {
-        // Animation simple
-        obj.innerHTML = formatEuro(end);
+    function filterMarket() {
+        currentSearch = document.getElementById('globalSearch').value.toLowerCase();
+        renderMarket();
     }
 
-    function showToast(msg, type) {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
-    }
-
-    // Simulation Live
-    function startLiveUpdates() {
-        // 1. WebSocket Binance (Cryptos)
-        const symbols = marketData.filter(a => a.binance).map(a => a.binance + '@trade').join('/');
+    // --- SIMULATION ---
+    function startLiveSimulation() {
+        // Crypto Socket
+        const symbols = db.filter(a => a.binance).map(a => a.binance + '@trade').join('/');
         const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbols}`);
-        
-        ws.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            const asset = marketData.find(a => a.binance === data.s.toLowerCase());
-            if(asset) {
-                updatePrice(asset, parseFloat(data.p));
-            }
+        ws.onmessage = e => {
+            const d = JSON.parse(e.data);
+            const a = db.find(x => x.binance === d.s.toLowerCase());
+            if(a) updatePrice(a, parseFloat(d.p));
         };
 
-        // 2. Simulation Actions
+        // Stock Random
         setInterval(() => {
-            marketData.filter(a => !a.binance).forEach(asset => {
-                const move = 1 + (Math.random() * 0.002 - 0.001); // Variation douce
-                updatePrice(asset, asset.price * move);
+            db.filter(a => !a.binance).forEach(a => {
+                const move = 1 + (Math.random() * 0.004 - 0.002);
+                updatePrice(a, a.price * move);
             });
-        }, 3000);
+        }, 2000);
     }
 
     function updatePrice(asset, newPrice) {
         asset.price = newPrice;
+        asset.history.shift();
+        asset.history.push(newPrice);
         
-        // Mise à jour Visuelle carte
+        // DOM Update (Optimization: only text content)
         const priceEl = document.getElementById(`price-${asset.id}`);
         if(priceEl) {
-            priceEl.innerText = formatEuro(newPrice);
-            priceEl.style.color = newPrice > asset.price ? 'var(--accent-green)' : 'var(--text-main)'; // Petit flash
+            priceEl.innerText = formatMoney(newPrice);
+            priceEl.style.color = newPrice > asset.history[18] ? 'var(--accent-green)' : 'var(--accent-red)';
+            setTimeout(() => priceEl.style.color = 'var(--text-main)', 500);
         }
-
-        // Si on est sur l'onglet portefeuille, on met à jour le total header
-        // (On ne re-render pas tout le tableau portfolio pour perf, juste le header)
-        renderHeader(); 
+        
+        // Update modal if open
+        if(activeAssetId === asset.id) {
+            document.getElementById('modalPrice').innerText = formatMoney(newPrice);
+        }
     }
 
-    // Lancement
     init();
 
 </script>
