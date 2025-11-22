@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovaTrade Pro v11.0 - Données Réelles</title>
+    <title>NovaTrade Pro v11.0 - Live Data</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lightweight Charts v4.1.1 -->
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
@@ -17,6 +17,7 @@
         ::-webkit-scrollbar-track { background: #13161a; }
         ::-webkit-scrollbar-thumb { background: #2d333b; border-radius: 3px; }
         .border-theme { border-color: #1f2937; }
+        
         @keyframes pulse-live {
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
             70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
@@ -24,8 +25,30 @@
         }
         .live-dot { animation: pulse-live 2s infinite; }
         .tf-active { background-color: #2563eb; color: white; border-color: #2563eb; }
-        /* Loading overlay */
         #chart-loader { backdrop-filter: blur(5px); background: rgba(11, 14, 17, 0.5); }
+
+        /* Animations de Flash Prix */
+        @keyframes flashGreen { 0% { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.5); } 100% { color: inherit; } }
+        @keyframes flashRed { 0% { color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); } 100% { color: inherit; } }
+        
+        .flash-up { animation: flashGreen 1s ease-out; }
+        .flash-down { animation: flashRed 1s ease-out; }
+        
+        /* Badge LIVE */
+        .badge-live {
+            background-color: #ef4444;
+            color: white;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            animation: pulse-live-badge 1.5s infinite;
+        }
+        @keyframes pulse-live-badge {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden text-xs">
@@ -40,7 +63,6 @@
                 <span class="flex items-center gap-1"><i class="ph-fill ph-clock text-red-500"></i> TOK: <span class="text-white" id="time-tokyo">--:--</span></span>
             </div>
             <div class="flex gap-4" id="ticker-prices">
-                <!-- Injecté par JS -->
                 <span>Chargement...</span>
             </div>
         </div>
@@ -76,7 +98,7 @@
     <!-- LAYOUT -->
     <div class="flex flex-1 overflow-hidden">
 
-        <!-- SIDEBAR GAUCHE (ACTIFS DYNAMIQUES) -->
+        <!-- SIDEBAR GAUCHE -->
         <aside class="w-60 bg-[#13161a] border-r border-theme flex flex-col shrink-0 z-10">
             <div class="flex border-b border-theme">
                 <button onclick="filterAssets('crypto')" class="flex-1 py-2.5 text-center hover:bg-[#1a1d24] text-blue-400 font-medium border-b-2 border-blue-500 bg-[#1a1d24]">Crypto</button>
@@ -84,8 +106,7 @@
                 <button onclick="filterAssets('commodity')" class="flex-1 py-2.5 text-center hover:bg-[#1a1d24] text-gray-500">Matières</button>
             </div>
             <div id="asset-list" class="p-2 overflow-y-auto flex-1 space-y-1">
-                <!-- Liste générée par JS -->
-                <div class="text-center text-gray-500 mt-4">Chargement des actifs...</div>
+                <div class="text-center text-gray-500 mt-4">Chargement...</div>
             </div>
         </aside>
 
@@ -96,11 +117,12 @@
                     <span class="text-white font-bold text-sm flex items-center gap-2">
                         <i class="ph-fill ph-chart-line-up text-blue-500"></i> 
                         <span id="chart-symbol-name">BTCEUR</span>
-                        <span id="chart-price-header" class="font-mono text-gray-400 font-normal ml-2">---</span>
+                        <!-- INDICATEUR LIVE -->
+                        <span id="live-badge" class="hidden badge-live">LIVE</span>
+                        <span id="chart-price-header" class="font-mono text-gray-400 font-normal ml-2 transition-colors duration-300">---</span>
                     </span>
                     <div class="h-4 w-px bg-gray-700"></div>
                     <div class="flex gap-0.5 bg-[#0b0e11] rounded p-0.5 border border-gray-800" id="timeframe-controls">
-                        <!-- Timeframes mappés pour l'API -->
                         <button onclick="changeTimeframe('1d')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition tf-active" data-tf="1d">1J</button>
                         <button onclick="changeTimeframe('1w')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition" data-tf="1w">1S</button>
                         <button onclick="changeTimeframe('1mo')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition" data-tf="1mo">1M</button>
@@ -119,7 +141,7 @@
                     <div id="legend" class="absolute top-3 left-3 z-10 bg-[#13161a]/90 backdrop-blur px-2 py-1 rounded border border-gray-700 text-white text-xs font-mono hidden pointer-events-none shadow-lg"></div>
                 </div>
 
-                <!-- Panel Bas (Statique pour l'UI) -->
+                <!-- Panel Bas -->
                 <div class="h-48 border-t border-theme bg-[#13161a] flex flex-col shrink-0">
                     <div class="flex border-b border-theme bg-[#0b0e11]">
                         <button class="px-4 py-1.5 text-[11px] border-r border-theme text-blue-400 bg-[#13161a] font-medium border-t-2 border-t-blue-500">Chat IA</button>
@@ -181,7 +203,7 @@
         </aside>
     </div>
 
-    <!-- JAVASCRIPT : MOTEUR DE DONNÉES RÉELLES -->
+    <!-- JAVASCRIPT -->
     <script>
         // --- CONFIGURATION ACTIFS ---
         const assets = {
@@ -208,11 +230,12 @@
 
         let currentSymbol = 'BTCEUR';
         let currentType = 'crypto';
-        let currentInterval = '1d'; // Default timeframe
+        let currentInterval = '1d';
+        let liveInterval = null; // Variable pour stocker l'ID du setInterval
+        let previousPrice = 0; // Pour détecter les changements de prix
 
         // --- API FETCH FUNCTIONS ---
 
-        // 1. Binance (Crypto) - Prix en direct
         async function fetchBinancePrice(symbol) {
             try {
                 const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
@@ -226,7 +249,6 @@
             } catch (e) { console.error("Binance Price Err:", e); return null; }
         }
 
-        // 2. Yahoo via AllOrigins (Stocks/Commodities) - Prix différé/réel selon dispo
         async function fetchYahooPrice(symbol) {
             const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
             const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
@@ -242,9 +264,7 @@
             } catch (e) { console.error("Yahoo Price Err:", e); return null; }
         }
 
-        // 3. Historique Graphique (Binance)
         async function fetchBinanceKlines(symbol, interval) {
-            // Mapping timeframe UI -> Binance API
             const map = { '1d': '1h', '1w': '4h', '1mo': '12h', '3mo': '1d', '1y': '1d', 'max': '1w' };
             const binanceInterval = map[interval] || '1h';
             
@@ -257,19 +277,13 @@
                     high: parseFloat(d[2]),
                     low: parseFloat(d[3]),
                     close: parseFloat(d[4]),
-                    volume: parseFloat(d[5]) // Custom field for volume series
+                    volume: parseFloat(d[5])
                 }));
             } catch (e) { return []; }
         }
 
-        // 4. Historique Graphique (Yahoo)
         async function fetchYahooChart(symbol, range) {
-            // Mapping timeframe UI -> Yahoo API
-            // ranges: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
-            // interval: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
-            let yRange = '1mo';
-            let yInterval = '60m';
-
+            let yRange = '1mo', yInterval = '60m';
             if (range === '1d') { yRange = '1d'; yInterval = '5m'; }
             else if (range === '1w') { yRange = '5d'; yInterval = '15m'; }
             else if (range === '1mo') { yRange = '1mo'; yInterval = '60m'; }
@@ -286,10 +300,9 @@
                 const result = JSON.parse(json.contents).chart.result[0];
                 const timestamps = result.timestamp;
                 const quotes = result.indicators.quote[0];
-                
                 const data = [];
                 for(let i=0; i<timestamps.length; i++) {
-                    if(quotes.open[i] === null) continue; // Skip nulls
+                    if(quotes.open[i] === null) continue;
                     data.push({
                         time: timestamps[i],
                         open: quotes.open[i],
@@ -321,7 +334,6 @@
         });
         volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
 
-        // Resize
         new ResizeObserver(entries => {
             const rect = entries[0].contentRect;
             chart.applyOptions({ width: rect.width, height: rect.height });
@@ -329,14 +341,13 @@
 
         // --- LOGIQUE PRINCIPALE ---
 
-        // Remplir la Sidebar
         function renderAssets(type) {
             const list = document.getElementById('asset-list');
             list.innerHTML = '';
             assets[type].forEach(asset => {
                 const el = document.createElement('div');
                 el.className = `group p-2 rounded hover:bg-[#1f2329] flex justify-between items-center cursor-pointer transition border border-transparent hover:border-gray-700 mb-1 ${currentSymbol === asset.id ? 'bg-[#252930] border-blue-500/50' : ''}`;
-                el.onclick = () => loadAsset(asset.id, type);
+                el.onclick = () => filterAssets(type, asset.id); // Correctly handle click to select asset
                 el.innerHTML = `
                     <div class="flex items-center gap-2">
                         <i class="ph-fill ${asset.icon} ${asset.color} text-lg"></i>
@@ -349,12 +360,11 @@
                 `;
                 list.appendChild(el);
             });
-            updateSidebarPrices(); // Trigger fetch immediately
+            updateSidebarPrices();
         }
 
-        // Mettre à jour les prix Sidebar
         async function updateSidebarPrices() {
-            const visibleAssets = assets[currentType]; // Only fetch visible tab assets
+            const visibleAssets = assets[currentType];
             for (const asset of visibleAssets) {
                 let data = null;
                 if (asset.type === 'crypto') data = await fetchBinancePrice(asset.id);
@@ -372,60 +382,117 @@
             }
         }
 
-        // Charger un actif dans le graphique
         async function loadAsset(symbol, type) {
             currentSymbol = symbol;
             currentType = type;
             
-            // Update UI
             document.getElementById('chart-symbol-name').innerText = symbol.replace('=F', '');
             document.getElementById('ai-asset-name').innerText = symbol.replace('=F', '');
             document.getElementById('chart-loader').classList.remove('hidden');
-            renderAssets(type); // Re-render to highlight selection
+            renderAssets(type); 
 
-            // Update Header Price (One shot)
-            let priceData = type === 'crypto' ? await fetchBinancePrice(symbol) : await fetchYahooPrice(symbol);
+            // Chargement initial
+            await updateChartData();
+            document.getElementById('chart-loader').classList.add('hidden');
+
+            // Gestion du mode LIVE
+            if (currentInterval === '1d') {
+                startLiveMode();
+            } else {
+                stopLiveMode();
+            }
+        }
+
+        // Fonction centralisée pour mise à jour données
+        async function updateChartData() {
+            // Update Header Price
+            let priceData = currentType === 'crypto' ? await fetchBinancePrice(currentSymbol) : await fetchYahooPrice(currentSymbol);
             if(priceData) {
                 const el = document.getElementById('chart-price-header');
-                el.innerText = priceData.price.toLocaleString();
-                el.className = `font-mono ml-2 font-bold ${priceData.change >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                const currentPrice = priceData.price;
+                
+                el.innerText = currentPrice.toLocaleString();
+                
+                // Animation Flash
+                el.classList.remove('flash-up', 'flash-down');
+                if (previousPrice > 0) {
+                    if (currentPrice > previousPrice) el.classList.add('flash-up');
+                    else if (currentPrice < previousPrice) el.classList.add('flash-down');
+                }
+                previousPrice = currentPrice;
+                
+                // Couleur fixe (tendance jour)
+                el.className = `font-mono ml-2 font-bold transition-colors duration-300 ${priceData.change >= 0 ? 'text-green-400' : 'text-red-400'} ${el.classList.contains('flash-up') ? 'flash-up' : ''} ${el.classList.contains('flash-down') ? 'flash-down' : ''}`;
             }
 
             // Fetch Chart Data
             let chartData = [];
-            if (type === 'crypto') {
-                chartData = await fetchBinanceKlines(symbol, currentInterval);
+            if (currentType === 'crypto') {
+                chartData = await fetchBinanceKlines(currentSymbol, currentInterval);
             } else {
-                chartData = await fetchYahooChart(symbol, currentInterval);
+                chartData = await fetchYahooChart(currentSymbol, currentInterval);
             }
 
-            // Set Data
             if (chartData.length > 0) {
                 candleSeries.setData(chartData.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close })));
                 volumeSeries.setData(chartData.map(d => ({ time: d.time, value: d.volume, color: d.close >= d.open ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' })));
-                chart.timeScale().fitContent();
+                // Ne pas fitContent à chaque refresh auto pour ne pas perturber l'utilisateur, seulement au premier load ou changement manuel
+                if(!liveInterval || document.getElementById('chart-loader').classList.contains('hidden') === false) {
+                     chart.timeScale().fitContent();
+                }
             }
-            document.getElementById('chart-loader').classList.add('hidden');
         }
 
-        // Changer Timeframe
-        window.changeTimeframe = function(tf) {
+        // --- GESTION LIVE MODE ---
+        function startLiveMode() {
+            // Nettoyer l'existant pour éviter les doublons
+            stopLiveMode();
+            
+            // Afficher badge
+            document.getElementById('live-badge').classList.remove('hidden');
+            
+            // Lancer boucle 5s
+            liveInterval = setInterval(() => {
+                console.log("Auto-refresh tick...");
+                updateChartData();
+            }, 5000);
+        }
+
+        function stopLiveMode() {
+            if (liveInterval) {
+                clearInterval(liveInterval);
+                liveInterval = null;
+            }
+            document.getElementById('live-badge').classList.add('hidden');
+        }
+
+        // --- INTERACTIONS UI ---
+
+        window.changeTimeframe = function(tf, btn) { // Fix button passing via onclick HTML
+            // Récupérer l'élément bouton si passé, sinon chercher par data-tf
+            const button = btn || document.querySelector(`button[data-tf="${tf}"]`);
+            
             currentInterval = tf;
-            // Update buttons
+            
+            // Update buttons UI
             document.querySelectorAll('#timeframe-controls button').forEach(b => {
                 b.classList.remove('tf-active', 'text-white');
-                if(b.dataset.tf === tf) b.classList.add('tf-active', 'text-white');
             });
+            if(button) button.classList.add('tf-active', 'text-white');
+            
             loadAsset(currentSymbol, currentType);
         };
 
-        // Changer Onglet Sidebar
-        window.filterAssets = function(type) {
+        window.filterAssets = function(type, symbolOverride) {
             currentType = type;
-            // Set defaults based on type
-            if(type === 'crypto') currentSymbol = 'BTCEUR';
-            if(type === 'stock') currentSymbol = 'AAPL';
-            if(type === 'commodity') currentSymbol = 'GC=F';
+            if (symbolOverride) {
+                currentSymbol = symbolOverride;
+            } else {
+                // Defaults
+                if(type === 'crypto') currentSymbol = 'BTCEUR';
+                if(type === 'stock') currentSymbol = 'AAPL';
+                if(type === 'commodity') currentSymbol = 'GC=F';
+            }
             renderAssets(type);
             loadAsset(currentSymbol, type);
         };
@@ -434,10 +501,9 @@
         renderAssets('crypto');
         loadAsset('BTCEUR', 'crypto'); // Load default
 
-        // Refresh Loop (10s)
+        // Sidebar Refresh Loop (Indépendant du chart)
         setInterval(() => {
             updateSidebarPrices();
-            // Optional: Refresh chart last candle if needed (omitted for simplicity, full reload on interaction)
         }, 10000);
 
         // Horloges
