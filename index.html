@@ -2,645 +2,452 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NovaTrade v3.0 | Ultimate Trading Ecosystem</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaTrade v3.3 - Assistant IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* --- CORE VARIABLES --- */
-        :root {
-            --bg-app: #09090b;
-            --bg-panel: #18181b;
-            --bg-card: #27272a;
-            --bg-input: #121212;
-            --primary: #6366f1; /* Indigo Modern */
-            --primary-glow: rgba(99, 102, 241, 0.3);
-            --green: #22c55e;
-            --red: #ef4444;
-            --gold: #fbbf24;
-            --text-main: #f4f4f5;
-            --text-muted: #a1a1aa;
-            --border: rgba(255,255,255,0.08);
-            --radius: 16px;
-            --sidebar-w: 280px;
-            --header-h: 70px;
-        }
-
-        body.light {
-            --bg-app: #f0f2f5; --bg-panel: #ffffff; --bg-card: #ffffff; --bg-input: #f3f4f6;
-            --text-main: #18181b; --text-muted: #71717a; --border: rgba(0,0,0,0.1);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; outline: none; user-select: none; }
+        @keyframes flash-green { 0% { color: #10B981; } 100% { color: white; } }
+        @keyframes flash-red { 0% { color: #EF4444; } 100% { color: white; } }
+        .updated-up { animation: flash-green 1s ease-out; }
+        .updated-down { animation: flash-red 1s ease-out; }
         
-        body { background: var(--bg-app); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; transition: 0.3s; }
-
-        /* --- LAYOUT --- */
-        .sidebar {
-            width: var(--sidebar-w); background: var(--bg-panel); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; padding: 20px; z-index: 100; transition: transform 0.3s;
-        }
-
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-
-        .header {
-            height: var(--header-h); background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border); padding: 0 30px; display: flex; align-items: center; justify-content: space-between; z-index: 90;
-        }
-
-        .content-area { flex: 1; overflow-y: auto; padding: 30px; scroll-behavior: smooth; }
-
-        /* --- COMPONENTS --- */
-        .brand { font-size: 1.4rem; font-weight: 800; display: flex; gap: 10px; align-items: center; letter-spacing: -0.5px; margin-bottom: 40px; }
-        .brand i { color: var(--primary); font-size: 1.8rem; }
-
-        .nav-btn {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
-            color: var(--text-muted); cursor: pointer; transition: 0.2s; font-weight: 500; margin-bottom: 4px;
-        }
-        .nav-btn:hover { background: rgba(255,255,255,0.03); color: var(--text-main); }
-        .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px var(--primary-glow); }
-
-        /* XP BAR */
-        .xp-container { margin-top: auto; background: var(--bg-input); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-        .xp-header { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 6px; }
-        .xp-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-        .xp-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
-
-        /* CARDS & GRID */
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1f2937; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
         
-        .card {
-            background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 20px; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;
-        }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-color: var(--primary); }
+        .active-tab { border-bottom: 2px solid #3B82F6; color: #3B82F6; }
+        .inactive-tab { color: #9CA3AF; }
+        .asset-btn.active { background-color: #2563EB; color: white; border-color: #3B82F6; }
 
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-        .badge.green { background: rgba(34, 197, 94, 0.15); color: var(--green); }
-        .badge.red { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .signal-badge { padding: 4px 12px; border-radius: 4px; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; }
+        .signal-buy { background-color: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid #10B981; }
+        .signal-sell { background-color: rgba(239, 68, 68, 0.2); color: #F87171; border: 1px solid #EF4444; }
+        .signal-hold { background-color: rgba(245, 158, 11, 0.2); color: #FBBF24; border: 1px solid #F59E0B; }
 
-        /* PRO TRADER MODAL */
-        .pro-modal {
-            position: fixed; inset: 0; background: var(--bg-app); z-index: 200;
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column;
+        /* Styles du Chatbot */
+        .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 50; display: flex; flex-direction: column; align-items: flex-end; }
+        .chat-button { 
+            width: 60px; height: 60px; border-radius: 50%; 
+            background: linear-gradient(135deg, #2563EB, #1E40AF); 
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.5);
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; transition: transform 0.2s;
         }
-        .pro-modal.active { transform: translateY(0); }
+        .chat-button:hover { transform: scale(1.1); }
         
-        .pro-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-panel); }
-        
-        .pro-grid {
-            display: grid; grid-template-columns: 3fr 1fr; height: 100%; overflow: hidden;
+        .chat-window {
+            width: 350px; height: 500px; background: #111827; 
+            border: 1px solid #374151; border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-bottom: 16px; display: flex; flex-direction: column;
+            transform-origin: bottom right; transition: all 0.3s ease;
+            opacity: 0; transform: scale(0.9) translateY(20px); pointer-events: none;
         }
-        .chart-pane { padding: 20px; overflow-y: auto; }
-        .order-pane { background: var(--bg-panel); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-
-        /* CONTROLS */
-        .btn { padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-green { background: var(--green); color: white; }
-        .btn-red { background: var(--red); color: white; }
-        .btn:active { transform: scale(0.98); }
-
-        /* HEATMAP */
-        .heatmap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; height: 200px; border-radius: 12px; overflow: hidden; }
-        .heat-cell { display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.8rem; transition: 0.2s; cursor: pointer; position: relative; }
-        .heat-cell:hover { z-index: 2; transform: scale(1.1); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-
-        /* ONBOARDING */
-        .tour-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .tour-card { background: var(--bg-panel); padding: 30px; border-radius: 24px; max-width: 500px; text-align: center; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-
-        /* RESPONSIVE */
-        @media(max-width: 1024px) { .pro-grid { grid-template-columns: 1fr; overflow-y: auto; } .order-pane { border-left: none; border-top: 1px solid var(--border); } }
-        @media(max-width: 768px) { 
-            .sidebar { position: fixed; bottom: 0; width: 100%; height: auto; flex-direction: row; padding: 10px; border-right: none; border-top: 1px solid var(--border); justify-content: space-around; background: rgba(24,24,27,0.95); }
-            .brand, .xp-container, .nav-text { display: none; }
-            .content-area { padding-bottom: 80px; }
-            .nav-btn { padding: 10px; border-radius: 50%; }
-            .nav-btn i { font-size: 1.5rem; }
-        }
+        .chat-window.open { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
         
-        /* ANIMATIONS */
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; position: relative; }
+        .msg-bot { background: #1F2937; color: #E5E7EB; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #374151; }
+        .msg-user { background: #2563EB; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        
+        .typing-dot { display: inline-block; width: 6px; height: 6px; background: #9CA3AF; border-radius: 50%; animation: typing 1.4s infinite both; margin: 0 2px; }
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
-<body>
+<body class="bg-gray-950 text-white font-sans min-h-screen p-4 md:p-6">
 
-    <nav class="sidebar">
-        <div class="brand"><i class="ph-fill ph-hexagon"></i> NovaTrade <span style="font-size:0.6em; background:var(--primary); color:white; padding:2px 6px; border-radius:4px;">v3.0</span></div>
+    <!-- DASHBOARD PRINCIPAL -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 pb-20">
         
-        <div class="nav-btn active" onclick="nav('dashboard')"><i class="ph ph-squares-four"></i> <span class="nav-text">Dashboard</span></div>
-        <div class="nav-btn" onclick="nav('market')"><i class="ph ph-chart-bar"></i> <span class="nav-text">Marché & Screener</span></div>
-        <div class="nav-btn" onclick="nav('portfolio')"><i class="ph ph-pie-chart"></i> <span class="nav-text">Analyse Portfolio</span></div>
-        <div class="nav-btn" onclick="nav('learn')"><i class="ph ph-graduation-cap"></i> <span class="nav-text">Académie</span></div>
-        <div class="nav-btn" onclick="nav('settings')"><i class="ph ph-gear"></i> <span class="nav-text">Paramètres</span></div>
+        <!-- GAUCHE : Sélection des Actifs -->
+        <div class="lg:col-span-1 bg-gray-900 rounded-xl border border-gray-800 p-4 flex flex-col h-[85vh] sticky top-4">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-blue-500 flex items-center gap-2">
+                    <i data-lucide="activity"></i> NovaTrade
+                </h1>
+                <p class="text-xs text-gray-500 mt-1">v3.3 Assistant IA</p>
+            </div>
 
-        <div class="xp-container">
-            <div class="xp-header">
-                <span id="levelLabel">Niveau 1: Novice</span>
-                <span id="xpLabel">0 / 1000 XP</span>
+            <div class="flex mb-4 border-b border-gray-700">
+                <button onclick="switchCategory('crypto')" id="tab-crypto" class="flex-1 pb-2 text-sm font-medium active-tab transition">Crypto</button>
+                <button onclick="switchCategory('stocks')" id="tab-stocks" class="flex-1 pb-2 text-sm font-medium inactive-tab transition">Actions</button>
             </div>
-            <div class="xp-track"><div class="xp-fill" id="xpBar"></div></div>
-            <div style="margin-top:8px; font-size:0.7rem; color:var(--text-muted); text-align:center;">Prochain badge: Trader Averti</div>
-        </div>
-    </nav>
 
-    <main class="main">
-        <header class="header">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <i class="ph ph-magnifying-glass" style="color:var(--text-muted)"></i>
-                <input type="text" placeholder="Rechercher un actif (Ctrl+K)" style="background:transparent; border:none; color:var(--text-main); font-size:0.9rem; width:200px;">
-            </div>
-            <div style="display:flex; gap:20px; align-items:center;">
-                <div style="text-align:right;">
-                    <div style="font-size:0.75rem; color:var(--text-muted)">Solde Disponible</div>
-                    <div style="font-weight:700; color:var(--primary);" id="headerCash">10 000 €</div>
-                </div>
-                <div style="width:40px; height:40px; background:var(--bg-card); border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); cursor:pointer;" onclick="toggleTheme()">
-                    <i class="ph-fill ph-moon"></i>
-                </div>
-            </div>
-        </header>
+            <div id="asset-list" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-2"></div>
 
-        <div id="content" class="content-area">
-            </div>
-    </main>
-
-    <div class="pro-modal" id="proModal">
-        <div class="pro-header">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <button onclick="closeProModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="ph-bold ph-arrow-left" style="font-size:1.5rem;"></i></button>
-                <div id="proIcon" style="font-size:2rem;"></div>
-                <div>
-                    <h2 id="proName" style="line-height:1;">Bitcoin</h2>
-                    <span id="proSymbol" style="color:var(--text-muted); font-size:0.8rem;">BTC/USD</span>
-                </div>
-                <div class="badge green" id="proBadge">LIVE</div>
-            </div>
-            <div style="text-align:right;">
-                <div id="proPrice" style="font-size:1.8rem; font-weight:800;">$0.00</div>
-                <div id="proChange" style="color:var(--green);">+0.00%</div>
+            <div class="mt-4 pt-4 border-t border-gray-800 text-xs text-center text-gray-500">
+                <p>Données Crypto: Binance API (Live)</p>
+                <p>Données Actions: Simulation (Demo)</p>
             </div>
         </div>
-        <div class="pro-grid">
-            <div class="chart-pane">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <button class="nav-btn" style="padding:6px 12px; font-size:0.8rem;" onclick="updateChartTime('1H')">1H</button>
-                    <button class="nav-btn active" style="padding:6px 12px; font-size:0.8rem;" onclick="updateChartTime('1D')">1J</button>
-                    <button class="nav-btn" style="padding:6px 12px; font-size:0.8rem;" onclick="updateChartTime('1W')">1S</button>
-                    <div style="border-left:1px solid var(--border); margin:0 5px;"></div>
-                    <button class="nav-btn" style="padding:6px 12px; font-size:0.8rem;"><i class="ph-fill ph-function"></i> Indicateurs</button>
+
+        <!-- CENTRE : Graphiques et Analyse -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <!-- En-tête Actif -->
+            <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <i data-lucide="trending-up" width="100" height="100"></i>
                 </div>
-                <div id="apexChart" style="height: 450px;"></div>
-                
-                <div style="margin-top:20px; display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                    <div class="card">
-                        <h3>Sentiment du Marché</h3>
-                        <div style="margin-top:15px; display:flex; align-items:center; justify-content:space-between;">
-                            <span style="color:var(--red)">Bearish</span>
-                            <div style="height:8px; flex:1; margin:0 10px; background:#333; border-radius:4px; overflow:hidden;">
-                                <div style="width:65%; background:var(--green); height:100%;"></div>
+                <div class="flex justify-between items-start relative z-10">
+                    <div>
+                        <h2 id="current-symbol" class="text-4xl font-bold">BTC</h2>
+                        <p id="current-name" class="text-gray-400 text-sm">Bitcoin</p>
+                    </div>
+                    <div class="text-right">
+                        <div id="main-price" class="text-4xl font-bold tracking-tight">--- €</div>
+                        <div id="main-change" class="text-lg font-medium mt-1">--- %</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4 mt-6 relative z-10">
+                    <div class="bg-gray-800/50 p-3 rounded-lg">
+                        <span class="text-gray-400 text-xs uppercase">Haut 24h</span>
+                        <div id="stat-high" class="font-mono text-green-400">---</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-3 rounded-lg">
+                        <span class="text-gray-400 text-xs uppercase">Bas 24h</span>
+                        <div id="stat-low" class="font-mono text-red-400">---</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-3 rounded-lg">
+                        <span class="text-gray-400 text-xs uppercase">Volume</span>
+                        <div id="stat-vol" class="font-mono text-blue-400">---</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphique -->
+            <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 min-h-[300px]">
+                <div class="relative h-64 w-full"><canvas id="mainChart"></canvas></div>
+            </div>
+
+            <!-- Analyse Expert -->
+            <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+                <div class="bg-gray-800/50 p-4 border-b border-gray-700 flex items-center justify-between">
+                    <h3 class="font-bold flex items-center gap-2 text-indigo-400">
+                        <i data-lucide="brain-circuit"></i> Analyse Stratégique
+                    </h3>
+                    <span class="text-xs text-gray-500 uppercase tracking-wider">Méthode Gave / IDL</span>
+                </div>
+                <div class="p-5">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 rounded-full bg-indigo-900/50 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                                <i data-lucide="glasses" size="24"></i>
                             </div>
-                            <span style="color:var(--green)">Bullish (65%)</span>
                         </div>
-                    </div>
-                    <div class="card">
-                        <h3>Fil d'Actualité</h3>
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
-                            <div style="padding:8px 0; border-bottom:1px solid var(--border);">• Analyse technique: RSI en surachat</div>
-                            <div style="padding:8px 0; border-bottom:1px solid var(--border);">• Volume en hausse de 15% sur 24h</div>
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <span id="analysis-signal" class="signal-badge signal-hold">Analyse en cours...</span>
+                                <span class="text-xs text-gray-500">Horizon: Long Terme</span>
+                            </div>
+                            <p id="analysis-text" class="text-gray-300 text-sm leading-relaxed italic">Chargement de l'analyse fondamentale...</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="order-pane">
-                <div class="card" style="background:rgba(0,0,0,0.2);">
-                    <h3 style="margin-bottom:15px;">Passer un Ordre</h3>
-                    <div style="display:flex; gap:10px; margin-bottom:15px;">
-                        <button class="btn btn-green" id="tabBuy" onclick="setTradeType('buy')">Acheter</button>
-                        <button class="btn btn-red" style="opacity:0.5" id="tabSell" onclick="setTradeType('sell')">Vendre</button>
-                    </div>
-                    <label style="font-size:0.8rem; color:var(--text-muted);">Montant en EUR</label>
-                    <input type="number" id="tradeInput" placeholder="0.00" style="width:100%; padding:12px; background:var(--bg-input); border:1px solid var(--border); color:white; border-radius:8px; margin-bottom:10px; font-size:1.2rem;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:20px;">
-                        <span>Dispo: <span id="tradeCash">10k €</span></span>
-                        <span>Frais: 0.1%</span>
-                    </div>
-                    <button class="btn btn-primary" onclick="executeTrade()">Confirmer l'ordre</button>
-                </div>
-                
-                <div class="card">
-                    <h3>Ma Position</h3>
-                    <div style="margin-top:15px; display:flex; justify-content:space-between;">
-                        <span style="color:var(--text-muted)">Quantité</span>
-                        <strong id="posQty">0.0000</strong>
-                    </div>
-                    <div style="margin-top:5px; display:flex; justify-content:space-between;">
-                        <span style="color:var(--text-muted)">Valeur</span>
-                        <strong id="posVal">0.00 €</strong>
-                    </div>
-                    <div style="margin-top:5px; display:flex; justify-content:space-between;">
-                        <span style="color:var(--text-muted)">P&L</span>
-                        <strong id="posPnl" style="color:var(--text-muted)">0.00 €</strong>
-                    </div>
-                </div>
+        </div>
+
+        <!-- DROITE : Actualités -->
+        <div class="lg:col-span-1 flex flex-col gap-6">
+            <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 h-full flex flex-col">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-yellow-500">
+                    <i data-lucide="newspaper" size="20"></i> Presse Financière
+                </h3>
+                <div id="news-feed" class="space-y-3 overflow-y-auto custom-scroll flex-1 pr-2"></div>
             </div>
         </div>
     </div>
 
+    <!-- WIDGET CHATBOT -->
+    <div class="chat-widget">
+        <!-- Fenêtre de chat -->
+        <div class="chat-window" id="chatWindow">
+            <!-- Header Chat -->
+            <div class="bg-blue-900 p-4 border-b border-gray-700 rounded-t-xl flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <i data-lucide="bot" size="18" class="text-white"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm">Nova Assistant</h4>
+                        <span class="text-xs text-blue-200 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-green-400 rounded-full inline-block"></span> En ligne
+                        </span>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-blue-200 hover:text-white"><i data-lucide="x" size="20"></i></button>
+            </div>
+            
+            <!-- Corps Chat -->
+            <div class="chat-messages custom-scroll" id="chatMessages">
+                <div class="msg msg-bot">
+                    Bonjour ! Je suis votre assistant financier Nova. Je peux analyser des actifs selon la méthode Gave. <br><br>
+                    Essayez : "Que penses-tu de Tesla ?" ou "Faut-il acheter du Bitcoin ?"
+                </div>
+            </div>
+
+            <!-- Input Chat -->
+            <div class="p-3 border-t border-gray-700 bg-gray-800 rounded-b-xl">
+                <form id="chatForm" onsubmit="handleChatSubmit(event)" class="flex gap-2">
+                    <input type="text" id="chatInput" placeholder="Posez votre question..." 
+                           class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition">
+                        <i data-lucide="send" size="18"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bouton Flottant -->
+        <button onclick="toggleChat()" class="chat-button">
+            <i data-lucide="message-circle" size="32" class="text-white"></i>
+        </button>
+    </div>
+
     <script>
-        /* --- 1. ENGINE CORE & DATA --- */
-        const DB = [
-            { id: 'btc', n: 'Bitcoin', s: 'BTC', c: 'Crypto', p: 68450, h: '#f7931a', i: 'ph-currency-btc' },
-            { id: 'eth', n: 'Ethereum', s: 'ETH', c: 'Crypto', p: 3450, h: '#627eea', i: 'ph-diamond' },
-            { id: 'sol', n: 'Solana', s: 'SOL', c: 'Crypto', p: 145, h: '#14f195', i: 'ph-lightning' },
-            { id: 'aapl', n: 'Apple', s: 'AAPL', c: 'Tech', p: 175, h: '#a3aaae', i: 'ph-apple-logo' },
-            { id: 'nvda', n: 'NVIDIA', s: 'NVDA', c: 'Tech', p: 880, h: '#76b900', i: 'ph-cpu' },
-            { id: 'tsla', n: 'Tesla', s: 'TSLA', c: 'Auto', p: 165, h: '#e31937', i: 'ph-car' },
-            { id: 'amzn', n: 'Amazon', s: 'AMZN', c: 'Tech', p: 180, h: '#ff9900', i: 'ph-shopping-cart' },
-            { id: 'msft', n: 'Microsoft', s: 'MSFT', c: 'Tech', p: 420, h: '#00a4ef', i: 'ph-windows-logo' },
-            { id: 'goog', n: 'Alphabet', s: 'GOOG', c: 'Tech', p: 170, h: '#4285f4', i: 'ph-google-logo' },
-            { id: 'meta', n: 'Meta', s: 'META', c: 'Tech', p: 490, h: '#0668e1', i: 'ph-meta-logo' }
+        // --- DONNÉES & CONFIGURATION ---
+        lucide.createIcons();
+
+        const CRYPTO_ASSETS = [
+            { symbol: 'BTC', pair: 'BTCEUR', name: 'Bitcoin', aliases: ['bitcoin', 'btc'] },
+            { symbol: 'ETH', pair: 'ETHEUR', name: 'Ethereum', aliases: ['ethereum', 'eth', 'ether'] },
+            { symbol: 'SOL', pair: 'SOLEUR', name: 'Solana', aliases: ['solana', 'sol'] },
+            { symbol: 'BNB', pair: 'BNBEUR', name: 'Binance Coin', aliases: ['binance', 'bnb'] },
+            { symbol: 'XRP', pair: 'XRPEUR', name: 'Ripple', aliases: ['ripple', 'xrp'] }
         ];
 
-        let user = JSON.parse(localStorage.getItem('nova_v3_user')) || {
-            cash: 10000,
-            xp: 0,
-            level: 1,
-            portfolio: {}, // { 'btc': { qty: 0.1, avg: 50000 } }
-            history: [],
-            achievements: []
+        const STOCK_ASSETS = [
+            { symbol: 'AAPL', name: 'Apple Inc.', basePrice: 175, aliases: ['apple', 'aapl', 'iphone'] },
+            { symbol: 'MSFT', name: 'Microsoft Corp', basePrice: 380, aliases: ['microsoft', 'msft', 'windows'] },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.', basePrice: 140, aliases: ['google', 'googl', 'alphabet'] },
+            { symbol: 'TSLA', name: 'Tesla Inc.', basePrice: 210, aliases: ['tesla', 'tsla', 'musk'] },
+            { symbol: 'NVDA', name: 'NVIDIA Corp', basePrice: 600, aliases: ['nvidia', 'nvda', 'ia'] },
+            { symbol: 'LVMH', name: 'LVMH', basePrice: 780, aliases: ['lvmh', 'luxe', 'vuitton'] }
+        ];
+
+        const EXPERT_ANALYSIS = {
+            'BTC': { signal: 'ACHETER', text: "Refuge contre la destruction monétaire. Le 'pricing power' ultime." },
+            'ETH': { signal: 'CONSERVER', text: "Forte corrélation Tech. Utile mais pas de la 'monnaie'." },
+            'SOL': { signal: 'VENDRE', text: "Trop spéculatif et centralisé pour un portefeuille patrimonial." },
+            'AAPL': { signal: 'CONSERVER', text: "Machine à cash, mais attention à la contraction des multiples si les taux montent." },
+            'MSFT': { signal: 'ACHETER', text: "Monopole naturel digital. Antifragile." },
+            'TSLA': { signal: 'VENDRE', text: "Valorisation de rêve. L'automobile est une industrie cyclique difficile." },
+            'NVDA': { signal: 'CONSERVER', text: "Leader incontesté, mais tout le monde est déjà dessus. Prudence." },
+            'LVMH': { signal: 'ACHETER', text: "Le moyen de jouer la richesse mondiale. Pricing power infini." },
+            'DEFAULT': { signal: 'NEUTRE', text: "Restez liquide en l'absence de tendance claire." }
         };
 
-        let currentAsset = null;
-        let chartInstance = null;
-        let activeView = 'dashboard';
-        let tradeType = 'buy';
+        const NEWS = [
+            { title: "La Fed maintient ses taux", source: "Financial Times", impact: "Neutre", url: "https://www.ft.com" },
+            { title: "Inflation EU en baisse", source: "Les Échos", impact: "Positif", url: "https://www.lesechos.fr" },
+            { title: "Stimulus Chine annoncé", source: "Bloomberg", impact: "Positif", url: "https://www.bloomberg.com" },
+            { title: "Le Yen plonge face au USD", source: "Reuters", impact: "Négatif", url: "https://www.reuters.com" },
+            { title: "Déficit US inquiétant", source: "WSJ", impact: "Négatif", url: "https://www.wsj.com" }
+        ];
 
-        // Initialisation Data OHLC simulée pour charts
-        DB.forEach(a => {
-            a.history = [];
-            let price = a.p;
-            for(let i=0; i<100; i++) {
-                const open = price;
-                const close = price * (1 + (Math.random()*0.04 - 0.02));
-                const high = Math.max(open, close) * (1 + Math.random()*0.01);
-                const low = Math.min(open, close) * (1 - Math.random()*0.01);
-                a.history.push({ x: new Date().getTime() - (100-i)*3600000, y: [open, high, low, close] });
-                price = close;
-            }
-            a.p = price; // Sync current price
-        });
+        let currentCategory = 'crypto';
+        let currentAsset = CRYPTO_ASSETS[0];
+        let myChart = null;
 
-        /* --- 2. NAVIGATION & ROUTING --- */
-        function nav(view) {
-            activeView = view;
-            const content = document.getElementById('content');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            // Simple active check based on onclick string matching
-            
-            // Render Views
-            if(view === 'dashboard') renderDashboard();
-            else if(view === 'market') renderMarket();
-            else if(view === 'portfolio') renderPortfolio();
-            else if(view === 'learn') renderLearn();
-            else if(view === 'settings') renderSettings();
+        // --- LOGIQUE CHATBOT ---
+        
+        function toggleChat() {
+            const win = document.getElementById('chatWindow');
+            win.classList.toggle('open');
+            if (win.classList.contains('open')) document.getElementById('chatInput').focus();
         }
 
-        /* --- 3. VIEW RENDERERS --- */
-        function renderDashboard() {
-            const totalVal = getPortfolioValue();
-            const pnl = totalVal + user.cash - 10000;
-            const pnlPct = (pnl / 10000) * 100;
+        function handleChatSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
 
-            document.getElementById('content').innerHTML = `
-                <h2 style="margin-bottom:20px;">Dashboard</h2>
-                <div class="grid-container" style="margin-bottom:30px;">
-                    <div class="card" style="background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); border:none;">
-                        <div style="color:rgba(255,255,255,0.7); font-size:0.9rem;">Valeur Totale</div>
-                        <div style="font-size:2.2rem; font-weight:800; margin:5px 0;">${format(totalVal + user.cash)}</div>
-                        <div class="badge ${pnl>=0?'green':'red'}" style="background:rgba(0,0,0,0.2); color:white;">${pnl>=0?'+':''}${format(pnl)} (${pnlPct.toFixed(2)}%)</div>
-                    </div>
-                    <div class="card">
-                        <div style="color:var(--text-muted); font-size:0.9rem;">Performance S&P 500</div>
-                        <div style="font-size:1.8rem; font-weight:700; margin:5px 0;">+12.4%</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">vs votre portfolio: <span style="color:${pnlPct>12.4?'var(--green)':'var(--red)'}">${pnlPct>12.4?'Leader':'Retard'}</span></div>
-                    </div>
-                    <div class="card">
-                        <div style="color:var(--text-muted); font-size:0.9rem;">Prochain Objectif</div>
-                        <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
-                            <i class="ph-fill ph-trophy" style="color:var(--gold); font-size:2rem;"></i>
-                            <div>
-                                <div style="font-weight:700;">Trade Master</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted);">Passer 10 ordres</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <h3 style="margin-bottom:15px;">Heatmap du Marché</h3>
-                <div class="heatmap-grid">
-                    ${DB.map(a => {
-                        const chg = (a.p - a.history[0].y[0])/a.history[0].y[0] * 100;
-                        const alpha = Math.min(Math.abs(chg)/5, 1); // Intensity
-                        const color = chg >= 0 ? `rgba(34, 197, 94, ${alpha})` : `rgba(239, 68, 68, ${alpha})`;
-                        return `<div class="heat-cell" onclick="openProModal('${a.id}')" style="background:${color}">${a.s}<br>${chg.toFixed(1)}%</div>`
-                    }).join('')}
-                </div>
-            `;
-        }
+            addMessage('user', text);
+            input.value = '';
 
-        function renderMarket() {
-            const html = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>Marché</h2>
-                    <div style="display:flex; gap:10px;">
-                        <button class="badge" style="background:var(--bg-card); border:1px solid var(--border); padding:8px 12px; cursor:pointer;">Cryptos</button>
-                        <button class="badge" style="background:var(--bg-card); border:1px solid var(--border); padding:8px 12px; cursor:pointer;">Actions</button>
-                    </div>
-                </div>
-                <div class="grid-container">
-                    ${DB.map(a => {
-                        const chg = ((a.p - a.history[a.history.length-2].y[3]) / a.history[a.history.length-2].y[3]) * 100;
-                        return `
-                        <div class="card" onclick="openProModal('${a.id}')" style="cursor:pointer;">
-                            <div style="display:flex; justify-content:space-between;">
-                                <div style="display:flex; gap:12px; align-items:center;">
-                                    <div style="width:40px; height:40px; background:${a.h}20; border-radius:10px; display:flex; align-items:center; justify-content:center; color:${a.h}; font-size:1.4rem;">
-                                        <i class="ph-fill ${a.i}"></i>
-                                    </div>
-                                    <div>
-                                        <div style="font-weight:700;">${a.n}</div>
-                                        <div style="font-size:0.8rem; color:var(--text-muted);">${a.s}</div>
-                                    </div>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="font-weight:700;">${format(a.p)}</div>
-                                    <div style="font-size:0.8rem; color:${chg>=0?'var(--green)':'var(--red)'}">${chg>=0?'+':''}${chg.toFixed(2)}%</div>
-                                </div>
-                            </div>
-                            <div style="margin-top:15px; height:4px; background:var(--bg-input); border-radius:2px; overflow:hidden;">
-                                <div style="width:${Math.random()*100}%; background:${a.h}; height:100%;"></div>
-                            </div>
-                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px; text-align:right;">Vol 24h</div>
-                        </div>
-                    `}).join('')}
-                </div>
-            `;
-            document.getElementById('content').innerHTML = html;
-        }
-
-        function renderPortfolio() {
-            const holdings = Object.entries(user.portfolio);
-            if(holdings.length === 0) return document.getElementById('content').innerHTML = `<div style="text-align:center; padding:50px; color:var(--text-muted);"><h2>Portfolio Vide</h2><p>Commencez à trader pour voir vos analyses.</p></div>`;
-
-            // Calcul Diversification
-            const total = getPortfolioValue();
-            const sectors = {};
-            holdings.forEach(([id, h]) => {
-                const a = DB.find(x => x.id === id);
-                const val = h.qty * a.p;
-                sectors[a.c] = (sectors[a.c] || 0) + val;
-            });
-            
-            // Diversification Score (Simulated)
-            const diversityScore = Math.min(Object.keys(sectors).length * 20, 100);
-
-            document.getElementById('content').innerHTML = `
-                <h2>Analyse Portfolio</h2>
-                <div class="grid-container" style="margin-top:20px;">
-                    <div class="card">
-                        <canvas id="pfChart"></canvas>
-                    </div>
-                    <div class="card">
-                        <h3>Score Diversification</h3>
-                        <div style="font-size:3rem; font-weight:800; color:var(--primary); margin:10px 0;">${diversityScore}/100</div>
-                        <p style="font-size:0.9rem; color:var(--text-muted);">Vous êtes exposé à ${Object.keys(sectors).length} secteurs différents.</p>
-                        <div style="margin-top:20px; display:flex; flex-wrap:wrap; gap:5px;">
-                            ${Object.keys(sectors).map(s => `<span class="badge" style="background:var(--bg-input); color:var(--text-muted);">${s}</span>`).join('')}
-                        </div>
-                    </div>
-                </div>
-                <h3 style="margin-top:30px;">Positions Actuelles</h3>
-                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-top:15px;">
-                    ${holdings.map(([id, h]) => {
-                        const a = DB.find(x => x.id === id);
-                        const val = h.qty * a.p;
-                        const pnl = val - (h.qty * h.avg);
-                        return `
-                        <div style="padding:15px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <i class="ph-fill ${a.i}" style="color:${a.h}; font-size:1.5rem;"></i>
-                                <b>${a.n}</b>
-                            </div>
-                            <div style="text-align:right;">
-                                <div>${format(val)}</div>
-                                <div style="font-size:0.8rem; color:${pnl>=0?'var(--green)':'var(--red)'}">${pnl>=0?'+':''}${format(pnl)}</div>
-                            </div>
-                        </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-
-            // Render Chart.js Pie
+            // Simulation délai de réponse
+            showTypingIndicator();
             setTimeout(() => {
-                new Chart(document.getElementById('pfChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(sectors),
-                        datasets: [{
-                            data: Object.values(sectors),
-                            backgroundColor: ['#6366f1', '#22c55e', '#ef4444', '#fbbf24', '#a855f7'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'right' } }, cutout: '70%' }
-                });
-            }, 100);
+                removeTypingIndicator();
+                generateResponse(text);
+            }, 1000);
         }
 
-        function renderLearn() {
-            document.getElementById('content').innerHTML = `
-                <h2>Académie</h2>
-                <div class="grid-container" style="margin-top:20px;">
-                    <div class="card" style="border-left: 4px solid var(--green);">
-                        <h3>Les Bases</h3>
-                        <p style="font-size:0.9rem; color:var(--text-muted); margin:10px 0;">Comprendre les chandeliers japonais.</p>
-                        <button class="btn btn-primary" style="padding:8px;">Démarrer</button>
-                    </div>
-                    <div class="card" style="opacity:0.5;">
-                        <h3>Stratégies (Verrouillé)</h3>
-                        <p style="font-size:0.9rem; color:var(--text-muted); margin:10px 0;">Niveau 3 requis.</p>
-                    </div>
-                </div>
-            `;
+        function addMessage(sender, text) {
+            const div = document.createElement('div');
+            div.className = `msg ${sender === 'user' ? 'msg-user' : 'msg-bot'}`;
+            div.innerHTML = text;
+            const container = document.getElementById('chatMessages');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
-        /* --- 4. PRO MODAL LOGIC --- */
-        function openProModal(id) {
-            currentAsset = DB.find(x => x.id === id);
-            document.getElementById('proModal').classList.add('active');
-            
-            // Populate Data
-            document.getElementById('proName').innerText = currentAsset.n;
-            document.getElementById('proSymbol').innerText = currentAsset.s + "/USD";
-            document.getElementById('proIcon').innerHTML = `<i class="ph-fill ${currentAsset.i}" style="color:${currentAsset.h}"></i>`;
-            document.getElementById('proPrice').innerText = format(currentAsset.p);
-            
-            // Update Position Info
-            updatePositionInfo();
-
-            // Render ApexChart
-            renderApexChart('1D');
+        function showTypingIndicator() {
+            const div = document.createElement('div');
+            div.id = 'typing-indicator';
+            div.className = 'msg msg-bot';
+            div.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+            document.getElementById('chatMessages').appendChild(div);
         }
 
-        function closeProModal() { document.getElementById('proModal').classList.remove('active'); }
-
-        function renderApexChart(timeframe) {
-            if(chartInstance) chartInstance.destroy();
-            
-            const data = currentAsset.history; // Simplified usage
-            
-            const options = {
-                series: [{ data: data }],
-                chart: { type: 'candlestick', height: 450, background: 'transparent', toolbar: { show: false } },
-                theme: { mode: 'dark' },
-                xaxis: { type: 'datetime', tooltip: { enabled: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-                yaxis: { tooltip: { enabled: true }, opposite: true },
-                grid: { borderColor: '#333', strokeDashArray: 4 },
-                plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' } } }
-            };
-
-            chartInstance = new ApexCharts(document.querySelector("#apexChart"), options);
-            chartInstance.render();
+        function removeTypingIndicator() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
         }
 
-        /* --- 5. TRADING ENGINE --- */
-        function setTradeType(type) {
-            tradeType = type;
-            document.getElementById('tabBuy').style.opacity = type === 'buy' ? '1' : '0.5';
-            document.getElementById('tabSell').style.opacity = type === 'sell' ? '1' : '0.5';
-        }
-
-        function updatePositionInfo() {
-            const h = user.portfolio[currentAsset.id];
-            const cashDisplay = document.getElementById('tradeCash');
-            const posQty = document.getElementById('posQty');
-            const posVal = document.getElementById('posVal');
-            const posPnl = document.getElementById('posPnl');
-
-            cashDisplay.innerText = format(user.cash);
+        function generateResponse(text) {
+            const lowerText = text.toLowerCase();
             
-            if(h) {
-                const val = h.qty * currentAsset.p;
-                const pnl = val - (h.qty * h.avg);
-                posQty.innerText = h.qty.toFixed(4);
-                posVal.innerText = format(val);
-                posPnl.innerText = (pnl>=0?'+':'') + format(pnl);
-                posPnl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            // Recherche de l'actif mentionné
+            let foundAsset = null;
+            let allAssets = [...CRYPTO_ASSETS, ...STOCK_ASSETS];
+            
+            for (let asset of allAssets) {
+                if (asset.aliases.some(alias => lowerText.includes(alias)) || lowerText.includes(asset.symbol.toLowerCase())) {
+                    foundAsset = asset;
+                    break;
+                }
+            }
+
+            if (foundAsset) {
+                const analysis = EXPERT_ANALYSIS[foundAsset.symbol] || EXPERT_ANALYSIS['DEFAULT'];
+                const signalColor = analysis.signal === 'ACHETER' ? 'text-green-400' : (analysis.signal === 'VENDRE' ? 'text-red-400' : 'text-yellow-400');
+                
+                // Simuler un prix si on n'a pas l'info sous la main
+                const price = foundAsset.basePrice ? foundAsset.basePrice : "Donnée Live"; 
+                
+                const response = `
+                    <strong>Analyse pour ${foundAsset.name} (${foundAsset.symbol}) :</strong><br>
+                    Signal : <span class="${signalColor} font-bold">${analysis.signal}</span><br>
+                    <br>
+                    <em>"${analysis.text}"</em>
+                `;
+                addMessage('bot', response);
+            } else if (lowerText.includes('bonjour') || lowerText.includes('salut')) {
+                addMessage('bot', "Bonjour ! Comment puis-je vous aider à investir aujourd'hui ?");
+            } else if (lowerText.includes('aide')) {
+                addMessage('bot', "Je peux analyser des actions (Apple, Tesla...) ou des cryptos (Bitcoin, Solana...). Donnez-moi juste un nom !");
             } else {
-                posQty.innerText = "0.0000";
-                posVal.innerText = "0.00 €";
-                posPnl.innerText = "0.00 €";
+                addMessage('bot', "Je ne suis pas sûr de comprendre. Essayez de mentionner un actif précis comme 'Bitcoin' ou 'LVMH'.");
             }
         }
 
-        function executeTrade() {
-            const amount = parseFloat(document.getElementById('tradeInput').value);
-            if(!amount || amount <= 0) return alert("Montant invalide");
+        // --- LOGIQUE PRINCIPALE (Similaire v3.2) ---
+
+        function init() {
+            renderAssetList();
+            renderNews();
+            fetchData();
+            setInterval(fetchData, 5000);
+        }
+
+        function renderAssetList() {
+            const container = document.getElementById('asset-list');
+            container.innerHTML = '';
+            const list = currentCategory === 'crypto' ? CRYPTO_ASSETS : STOCK_ASSETS;
+            list.forEach(asset => {
+                const btn = document.createElement('button');
+                const isActive = asset.symbol === currentAsset.symbol;
+                btn.className = `asset-btn w-full text-left p-3 rounded-lg border border-gray-700 hover:bg-gray-800 transition flex justify-between items-center ${isActive ? 'active' : 'bg-gray-800/40 text-gray-300'}`;
+                btn.onclick = () => { currentAsset = asset; renderAssetList(); fetchData(); };
+                btn.innerHTML = `<div><div class="font-bold">${asset.symbol}</div><div class="text-xs opacity-70">${asset.name}</div></div>`;
+                container.appendChild(btn);
+            });
+        }
+
+        function renderNews() {
+            const c = document.getElementById('news-feed');
+            c.innerHTML = '';
+            NEWS.forEach(n => {
+                const color = n.impact === 'Positif' ? 'text-green-400' : (n.impact === 'Négatif' ? 'text-red-400' : 'text-gray-400');
+                const a = document.createElement('a');
+                a.href = n.url; a.target = "_blank";
+                a.className = "block bg-gray-800 p-3 rounded border-l-4 border-gray-600 hover:bg-gray-750 transition group";
+                a.style.borderColor = n.impact === 'Positif' ? '#10B981' : (n.impact === 'Négatif' ? '#EF4444' : '#9CA3AF');
+                a.innerHTML = `<div class="flex justify-between text-xs text-gray-500 mb-1"><span class="text-blue-400">${n.source}</span></div><h4 class="text-sm font-medium text-gray-200 mb-2">${n.title}</h4><span class="text-xs ${color} font-bold uppercase">${n.impact}</span>`;
+                c.appendChild(a);
+            });
+            lucide.createIcons();
+        }
+
+        async function fetchData() {
+            document.getElementById('current-symbol').innerText = currentAsset.symbol;
+            document.getElementById('current-name').innerText = currentAsset.name;
+            renderAnalysis(currentAsset.symbol);
             
-            if(tradeType === 'buy') {
-                if(amount > user.cash) return alert("Fonds insuffisants");
-                const qty = amount / currentAsset.p;
-                
-                const h = user.portfolio[currentAsset.id] || { qty: 0, avg: 0 };
-                const newTotal = (h.qty * h.avg) + amount;
-                const newQty = h.qty + qty;
-                
-                user.portfolio[currentAsset.id] = { qty: newQty, avg: newTotal/newQty };
-                user.cash -= amount;
-                addXP(50);
+            if (currentCategory === 'crypto') {
+                try {
+                    const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${currentAsset.pair}`);
+                    const data = await res.json();
+                    updateUI(data.lastPrice, data.priceChangePercent, data.highPrice, data.lowPrice, data.volume);
+                    
+                    const kline = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentAsset.pair}&interval=1h&limit=24`);
+                    const kData = await kline.json();
+                    renderChart(kData.map(d => new Date(d[0]).getHours() + 'h'), kData.map(d => parseFloat(d[4])));
+                } catch(e) { console.log(e); }
             } else {
-                const h = user.portfolio[currentAsset.id];
-                if(!h) return alert("Aucune position");
-                const val = h.qty * currentAsset.p;
-                if(amount > val + 1) return alert("Solde insuffisant"); // +1 for rounding tolerance
-                
-                const qty = amount / currentAsset.p;
-                h.qty -= qty;
-                if(h.qty <= 0.00001) delete user.portfolio[currentAsset.id];
-                user.cash += amount;
-                addXP(50);
+                // Simulation Stock
+                const base = currentAsset.basePrice;
+                const price = base + (Math.random() - 0.5) * (base * 0.02);
+                updateUI(price, ((price-base)/base)*100, price*1.01, price*0.99, Math.floor(Math.random()*1000000));
+                const labels = Array.from({length:24},(_,i)=>i+'h');
+                let p=base; const prices=labels.map(()=>{ p+=(Math.random()-0.5)*(base*0.01); return p; }); prices[23]=price;
+                renderChart(labels, prices);
             }
+        }
+
+        function updateUI(p, c, h, l, v) {
+            const priceEl = document.getElementById('main-price');
+            const val = parseFloat(p);
+            priceEl.innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val);
+            const changeEl = document.getElementById('main-change');
+            const chg = parseFloat(c);
+            changeEl.innerText = (chg>0?'+':'') + chg.toFixed(2) + '%';
+            changeEl.className = `text-lg font-medium mt-1 ${chg>=0 ? 'text-green-400' : 'text-red-400'}`;
+            document.getElementById('stat-high').innerText = parseFloat(h).toFixed(2);
+            document.getElementById('stat-low').innerText = parseFloat(l).toFixed(2);
+            let volStr = v > 1000000 ? (v/1000000).toFixed(2)+'M' : (v/1000).toFixed(2)+'k';
+            document.getElementById('stat-vol').innerText = volStr;
+        }
+
+        function renderAnalysis(symbol) {
+            const a = EXPERT_ANALYSIS[symbol] || EXPERT_ANALYSIS['DEFAULT'];
+            const sig = document.getElementById('analysis-signal');
+            sig.innerText = a.signal;
+            document.getElementById('analysis-text').innerText = a.text;
+            sig.className = 'signal-badge ' + (a.signal==='ACHETER'?'signal-buy':(a.signal==='VENDRE'?'signal-sell':'signal-hold'));
+        }
+
+        function renderChart(lbls, data) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (myChart) myChart.destroy();
+            const isUp = data[data.length-1] >= data[0];
+            const col = isUp ? '#10B981' : '#EF4444';
+            const grad = ctx.createLinearGradient(0,0,0,300);
+            grad.addColorStop(0, isUp ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
             
-            save();
-            updatePositionInfo();
-            document.getElementById('headerCash').innerText = format(user.cash);
-            document.getElementById('tradeInput').value = '';
-            alert("Ordre exécuté !");
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: lbls, datasets: [{ data: data, borderColor: col, backgroundColor: grad, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { position: 'right', grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } } }, interaction: { intersect: false, mode: 'index' } }
+            });
         }
 
-        /* --- 6. GAMIFICATION SYSTEM --- */
-        function addXP(amount) {
-            user.xp += amount;
-            const nextLevel = user.level * 1000;
-            if(user.xp >= nextLevel) {
-                user.level++;
-                alert(`NIVEAU SUPÉRIEUR ! Vous êtes maintenant niveau ${user.level}`);
-            }
-            updateXPUI();
-            save();
+        function switchCategory(c) { currentCategory=c; currentAsset = c==='crypto'?CRYPTO_ASSETS[0]:STOCK_ASSETS[0]; 
+            document.getElementById('tab-crypto').className = c==='crypto'?'flex-1 pb-2 text-sm font-medium active-tab transition':'flex-1 pb-2 text-sm font-medium inactive-tab transition';
+            document.getElementById('tab-stocks').className = c==='stocks'?'flex-1 pb-2 text-sm font-medium active-tab transition':'flex-1 pb-2 text-sm font-medium inactive-tab transition';
+            init(); 
         }
 
-        function updateXPUI() {
-            const nextLevel = user.level * 1000;
-            const pct = (user.xp / nextLevel) * 100;
-            document.getElementById('xpBar').style.width = pct + '%';
-            document.getElementById('xpLabel').innerText = `${user.xp} / ${nextLevel} XP`;
-            document.getElementById('levelLabel').innerText = `Niveau ${user.level}`;
-        }
+        document.addEventListener('DOMContentLoaded', init);
 
-        /* --- 7. UTILS --- */
-        function format(n) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n); }
-        function getPortfolioValue() {
-            return Object.entries(user.portfolio).reduce((acc, [id, h]) => {
-                const a = DB.find(x => x.id === id);
-                return acc + (h.qty * a.p);
-            }, 0);
-        }
-        function save() { localStorage.setItem('nova_v3_user', JSON.stringify(user)); }
-        function toggleTheme() { document.body.classList.toggle('light'); }
-
-        // Auto-Start
-        nav('dashboard');
-        updateXPUI();
-        document.getElementById('headerCash').innerText = format(user.cash);
-
-        // Onboarding Tour (Simplifié)
-        if(!localStorage.getItem('nova_tour')) {
-            const tour = document.createElement('div');
-            tour.className = 'tour-overlay';
-            tour.innerHTML = `
-                <div class="tour-card">
-                    <h1>Bienvenue sur NovaTrade v3</h1>
-                    <p style="color:var(--text-muted); margin:20px 0;">La plateforme de trading la plus avancée pour apprendre sans risque.</p>
-                    <ul style="text-align:left; margin-bottom:30px; color:var(--text-muted);">
-                        <li>📊 Graphiques Pro & Indicateurs</li>
-                        <li>🎮 Gagnez de l'XP en tradant</li>
-                        <li>🏆 Débloquez des badges</li>
-                    </ul>
-                    <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove(); localStorage.setItem('nova_tour', true)">Commencer l'aventure</button>
-                </div>
-            `;
-            document.body.appendChild(tour);
-        }
     </script>
 </body>
 </html>
