@@ -3,596 +3,454 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovaTrade v8.8 - Stability Patch</title>
+    <title>NovaTrade Pro v11.0 - Données Réelles</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Lightweight Charts v4.1.1 -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
-        @keyframes flash-green { 0% { color: #10B981; } 100% { color: white; } }
-        @keyframes flash-red { 0% { color: #EF4444; } 100% { color: white; } }
-        .updated-up { animation: flash-green 1s ease-out; }
-        .updated-down { animation: flash-red 1s ease-out; }
-        
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #1f2937; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
-        
-        .active-tab { border-bottom: 2px solid #3B82F6; color: #3B82F6; }
-        .inactive-tab { color: #9CA3AF; }
-        .asset-btn.active { background-color: #2563EB; color: white; border-color: #3B82F6; }
-
-        .signal-badge { padding: 4px 12px; border-radius: 4px; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; }
-        .signal-buy { background-color: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid #10B981; }
-        .signal-sell { background-color: rgba(239, 68, 68, 0.2); color: #F87171; border: 1px solid #EF4444; }
-        .signal-hold { background-color: rgba(245, 158, 11, 0.2); color: #FBBF24; border: 1px solid #F59E0B; }
-
-        /* CHATBOT STYLING */
-        .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; align-items: flex-end; }
-        
-        .chat-button { 
-            width: 64px; height: 64px; border-radius: 50%; 
-            background: linear-gradient(135deg, #8B5CF6, #6D28D9); 
-            box-shadow: 0 4px 14px rgba(139, 92, 246, 0.5);
-            display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid #A78BFA;
-            z-index: 101;
+        body { font-family: 'Inter', sans-serif; background-color: #0b0e11; color: #cfd3da; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #13161a; }
+        ::-webkit-scrollbar-thumb { background: #2d333b; border-radius: 3px; }
+        .border-theme { border-color: #1f2937; }
+        @keyframes pulse-live {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
-        .chat-button:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.7); }
-        
-        .chat-window {
-            width: 350px; height: 500px; background: #111827; 
-            border: 1px solid #4C1D95; border-radius: 16px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            margin-bottom: 16px; display: flex; flex-direction: column;
-            transform-origin: bottom right; 
-            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
-            opacity: 0; transform: scale(0.9) translateY(20px); 
-            visibility: hidden; pointer-events: none;
-            overflow: hidden; position: relative;
-        }
-        .chat-window.open { opacity: 1; transform: scale(1) translateY(0); visibility: visible; pointer-events: auto; }
-        
-        .chat-header { background: linear-gradient(to right, #4C1D95, #6D28D9); padding: 12px 16px; border-bottom: 1px solid #5B21B6; }
-        
-        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #0f1420; }
-        
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .msg-bot { background: #1F2937; color: #E5E7EB; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #374151; }
-        .msg-user { background: #7C3AED; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-
-        /* Bot Card */
-        .bot-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-top: 8px; border-left: 4px solid #8B5CF6; }
-        .bot-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.9em; }
-        .bot-label { color: #9CA3AF; font-size: 0.8em; text-transform: uppercase; font-weight: bold; }
-        .bot-val { color: white; font-weight: 600; }
-        .bot-justification { font-style: italic; color: #D1D5DB; font-size: 0.85em; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
-        
-        .typing-dot { display: inline-block; width: 6px; height: 6px; background: #9CA3AF; border-radius: 50%; animation: typing 1.4s infinite both; margin: 0 2px; }
-        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-        /* AUTH MODAL */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; }
-        .modal-overlay.open { display: flex; }
-        .modal-content { background: #1F2937; width: 90%; max-width: 400px; border-radius: 16px; border: 1px solid #374151; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; animation: modalSlide 0.3s ease-out; }
-        @keyframes modalSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* HISTORY VIEW */
-        .history-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 20; display: none; flex-direction: column; }
-        .history-view.visible { display: flex; }
-        .history-item { border-bottom: 1px solid #374151; padding: 12px; cursor: pointer; transition: background 0.2s; }
-        .history-item:hover { background: #1F2937; }
-        .save-badge { font-size: 0.7rem; color: #34D399; display: flex; align-items: center; gap: 4px; margin-top: 4px; opacity: 0; transition: opacity 0.5s; }
-        .save-badge.visible { opacity: 1; }
+        .live-dot { animation: pulse-live 2s infinite; }
+        .tf-active { background-color: #2563eb; color: white; border-color: #2563eb; }
+        /* Loading overlay */
+        #chart-loader { backdrop-filter: blur(5px); background: rgba(11, 14, 17, 0.5); }
     </style>
 </head>
-<body class="bg-gray-950 text-white font-sans min-h-screen p-4 md:p-6">
+<body class="flex flex-col h-screen overflow-hidden text-xs">
 
-    <!-- HEADER & AUTH -->
-    <div class="max-w-7xl mx-auto flex justify-between items-center mb-6 px-4">
-        <div></div> <!-- Spacer -->
-        <div class="flex items-center gap-4">
-            <div id="auth-section">
-                <button onclick="openAuthModal('login')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition font-medium shadow-lg flex items-center gap-2">
-                    <i data-lucide="log-in" size="16"></i> Se connecter
+    <!-- 1. HEADER -->
+    <div class="flex flex-col shrink-0 z-30">
+        <!-- Ticker -->
+        <div class="bg-black text-[10px] text-gray-500 py-1 px-2 flex justify-between border-b border-gray-800 font-mono uppercase">
+            <div class="flex gap-4 overflow-hidden whitespace-nowrap">
+                <span class="flex items-center gap-1"><i class="ph-fill ph-clock text-green-500"></i> NY: <span class="text-white" id="time-ny">--:--</span></span>
+                <span class="flex items-center gap-1"><i class="ph-fill ph-clock text-yellow-500"></i> LON: <span class="text-white" id="time-london">--:--</span></span>
+                <span class="flex items-center gap-1"><i class="ph-fill ph-clock text-red-500"></i> TOK: <span class="text-white" id="time-tokyo">--:--</span></span>
+            </div>
+            <div class="flex gap-4" id="ticker-prices">
+                <!-- Injecté par JS -->
+                <span>Chargement...</span>
+            </div>
+        </div>
+
+        <!-- Main Header -->
+        <header class="bg-[#13161a] h-12 flex items-center justify-between px-4 border-b border-theme">
+            <div class="flex items-center gap-3">
+                <div class="w-7 h-7 bg-gradient-to-tr from-blue-600 to-cyan-500 rounded flex items-center justify-center shadow-lg">
+                    <i class="ph-bold ph-chart-polar text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-sm tracking-tight">NovaTrade <span class="text-blue-400">Pro</span></h1>
+                    <div class="text-[9px] text-gray-500 leading-none">v11.0 Live Data</div>
+                </div>
+            </div>
+            <div class="flex bg-[#0b0e11] p-1 rounded border border-gray-800">
+                <button class="px-3 py-1 rounded hover:bg-gray-800 text-blue-400 font-medium transition">Terminal</button>
+                <button class="px-3 py-1 rounded hover:bg-gray-800 text-gray-400 transition">Analyse</button>
+                <button class="px-3 py-1 rounded hover:bg-gray-800 text-gray-400 transition">Historique</button>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-[#0b0e11] px-2 py-1 rounded border border-gray-800">
+                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full live-dot"></div>
+                    <span class="text-green-500 font-mono">API Connectée</span>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-2">
+                    <i class="ph-bold ph-user-circle"></i> Compte
                 </button>
             </div>
-            <div id="user-profile" class="hidden flex items-center gap-3 bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700">
-                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-xs font-bold" id="user-initials">U</div>
-                <div class="text-sm">
-                    <div class="font-medium" id="user-email-display">User</div>
-                    <button onclick="logout()" class="text-xs text-red-400 hover:text-red-300">Déconnexion</button>
-                </div>
-            </div>
-        </div>
+        </header>
     </div>
 
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 pb-20">
-        
-        <!-- GAUCHE : Actifs -->
-        <div class="lg:col-span-1 bg-gray-900 rounded-xl border border-gray-800 p-4 flex flex-col h-[85vh] sticky top-4">
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold text-blue-500 flex items-center gap-2">
-                    <i data-lucide="activity"></i> NovaTrade
-                </h1>
-                <p class="text-xs text-gray-500 mt-1">v8.8 Stability Patch</p>
-            </div>
+    <!-- LAYOUT -->
+    <div class="flex flex-1 overflow-hidden">
 
-            <!-- ONGLETS DE NAVIGATION -->
-            <div class="flex mb-4 border-b border-gray-700 space-x-1">
-                <button onclick="switchCategory('crypto')" id="tab-crypto" class="flex-1 pb-2 text-xs font-medium active-tab transition">Crypto</button>
-                <button onclick="switchCategory('stocks')" id="tab-stocks" class="flex-1 pb-2 text-xs font-medium inactive-tab transition">Actions</button>
-                <button onclick="switchCategory('commodities')" id="tab-commodities" class="flex-1 pb-2 text-xs font-medium inactive-tab transition">Matières</button>
+        <!-- SIDEBAR GAUCHE (ACTIFS DYNAMIQUES) -->
+        <aside class="w-60 bg-[#13161a] border-r border-theme flex flex-col shrink-0 z-10">
+            <div class="flex border-b border-theme">
+                <button onclick="filterAssets('crypto')" class="flex-1 py-2.5 text-center hover:bg-[#1a1d24] text-blue-400 font-medium border-b-2 border-blue-500 bg-[#1a1d24]">Crypto</button>
+                <button onclick="filterAssets('stock')" class="flex-1 py-2.5 text-center hover:bg-[#1a1d24] text-gray-500">Actions</button>
+                <button onclick="filterAssets('commodity')" class="flex-1 py-2.5 text-center hover:bg-[#1a1d24] text-gray-500">Matières</button>
             </div>
-
-            <div id="asset-list" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-2"></div>
-            
-            <div id="data-source-indicator" class="mt-4 pt-4 border-t border-gray-800 text-xs text-center text-gray-500">
-                <p>Données Marché : API Directe</p>
-                <p>Actualités : <span class="text-green-400">Moteur Local</span></p>
+            <div id="asset-list" class="p-2 overflow-y-auto flex-1 space-y-1">
+                <!-- Liste générée par JS -->
+                <div class="text-center text-gray-500 mt-4">Chargement des actifs...</div>
             </div>
-        </div>
+        </aside>
 
-        <!-- CENTRE : Graphiques -->
-        <div class="lg:col-span-2 flex flex-col gap-6">
-            <!-- Header Actif -->
-            <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-lg relative overflow-hidden">
-                <div class="flex justify-between items-start relative z-10">
-                    <div>
-                        <h2 id="current-symbol" class="text-4xl font-bold">BTC</h2>
-                        <p id="current-name" class="text-gray-400 text-sm">Bitcoin</p>
-                    </div>
-                    <div class="text-right">
-                        <div id="main-price" class="text-4xl font-bold tracking-tight">--- €</div>
-                        <div id="main-change" class="text-lg font-medium mt-1">--- %</div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-4 mt-6 relative z-10">
-                    <div class="bg-gray-800/50 p-3 rounded-lg">
-                        <span class="text-gray-400 text-xs uppercase">Haut 24h</span>
-                        <div id="stat-high" class="font-mono text-green-400">---</div>
-                    </div>
-                    <div class="bg-gray-800/50 p-3 rounded-lg">
-                        <span class="text-gray-400 text-xs uppercase">Bas 24h</span>
-                        <div id="stat-low" class="font-mono text-red-400">---</div>
-                    </div>
-                    <div class="bg-gray-800/50 p-3 rounded-lg">
-                        <span class="text-gray-400 text-xs uppercase">Volume</span>
-                        <div id="stat-vol" class="font-mono text-blue-400">---</div>
+        <!-- CENTRALE -->
+        <main class="flex-1 flex flex-col min-w-0 bg-[#0b0e11] relative">
+            <div class="h-10 border-b border-theme flex items-center justify-between px-3 bg-[#13161a]">
+                <div class="flex items-center gap-3">
+                    <span class="text-white font-bold text-sm flex items-center gap-2">
+                        <i class="ph-fill ph-chart-line-up text-blue-500"></i> 
+                        <span id="chart-symbol-name">BTCEUR</span>
+                        <span id="chart-price-header" class="font-mono text-gray-400 font-normal ml-2">---</span>
+                    </span>
+                    <div class="h-4 w-px bg-gray-700"></div>
+                    <div class="flex gap-0.5 bg-[#0b0e11] rounded p-0.5 border border-gray-800" id="timeframe-controls">
+                        <!-- Timeframes mappés pour l'API -->
+                        <button onclick="changeTimeframe('1d')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition tf-active" data-tf="1d">1J</button>
+                        <button onclick="changeTimeframe('1w')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition" data-tf="1w">1S</button>
+                        <button onclick="changeTimeframe('1mo')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition" data-tf="1mo">1M</button>
+                        <button onclick="changeTimeframe('3mo')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition" data-tf="3mo">3M</button>
+                        <button onclick="changeTimeframe('1y')" class="px-2 py-0.5 rounded text-[10px] font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition" data-tf="1y">1A</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Graphique -->
-            <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 min-h-[300px]">
-                <div class="relative h-64 w-full"><canvas id="mainChart"></canvas></div>
-                <p class="text-[10px] text-gray-600 text-center mt-2" id="chart-disclaimer"></p>
-            </div>
-
-            <!-- Analyse Expert -->
-            <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-                <div class="bg-gray-800/50 p-4 border-b border-gray-700 flex items-center justify-between">
-                    <h3 class="font-bold flex items-center gap-2 text-indigo-400">
-                        <i data-lucide="brain-circuit"></i> Analyse Fondamentale
-                    </h3>
-                    <span class="text-xs text-gray-500 uppercase tracking-wider">Méthode Gave / IDL</span>
+            <div class="flex-1 flex flex-col relative h-full">
+                <div class="flex-1 relative w-full" id="chart-wrapper">
+                    <div id="chart-container" class="absolute inset-0"></div>
+                    <div id="chart-loader" class="absolute inset-0 flex items-center justify-center z-20 hidden">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                    <div id="legend" class="absolute top-3 left-3 z-10 bg-[#13161a]/90 backdrop-blur px-2 py-1 rounded border border-gray-700 text-white text-xs font-mono hidden pointer-events-none shadow-lg"></div>
                 </div>
-                <div class="p-5">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 rounded-full bg-indigo-900/50 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
-                                <i data-lucide="glasses" size="24"></i>
-                            </div>
+
+                <!-- Panel Bas (Statique pour l'UI) -->
+                <div class="h-48 border-t border-theme bg-[#13161a] flex flex-col shrink-0">
+                    <div class="flex border-b border-theme bg-[#0b0e11]">
+                        <button class="px-4 py-1.5 text-[11px] border-r border-theme text-blue-400 bg-[#13161a] font-medium border-t-2 border-t-blue-500">Chat IA</button>
+                        <button class="px-4 py-1.5 text-[11px] border-r border-theme text-gray-400">Analyse</button>
+                    </div>
+                    <div class="flex-1 p-2 overflow-y-auto">
+                        <div class="flex gap-2 mb-2">
+                            <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-[10px] text-white shrink-0">AI</div>
+                            <div class="bg-[#1f2329] p-2 rounded text-gray-300 text-[11px]">Analyse en cours sur <span id="ai-asset-name" class="font-bold">BTCEUR</span>... La tendance court terme semble haussière avec un support solide identifié.</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- SIDEBAR DROITE -->
+        <aside class="w-80 bg-[#13161a] border-l border-theme flex flex-col shrink-0 z-20 overflow-y-auto">
+            <div class="p-4 border-b border-theme space-y-6">
+                <!-- Fear & Greed -->
+                <div>
+                    <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-2 flex items-center gap-2"><i class="ph-fill ph-gauge text-purple-400"></i> Fear & Greed</h3>
+                    <div class="bg-[#0b0e11] rounded p-3 border border-gray-800">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-xs text-gray-400">Index</span>
+                            <span class="text-xl font-bold text-green-400">74</span>
+                        </div>
+                        <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden"><div class="bg-green-500 h-full w-[74%]"></div></div>
+                    </div>
+                </div>
+                <!-- Top Movers -->
+                <div>
+                    <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-2 flex items-center gap-2"><i class="ph-fill ph-trend-up text-blue-400"></i> Top Movers</h3>
+                    <div class="space-y-1 text-xs">
+                        <div class="flex justify-between p-2 bg-[#1f2329] rounded"><span class="text-white">SOL</span><span class="text-green-400 font-bold">+8.4%</span></div>
+                        <div class="flex justify-between p-2 bg-[#1f2329] rounded"><span class="text-white">NVDA</span><span class="text-green-400 font-bold">+4.1%</span></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Presse -->
+            <div class="flex-1 p-4 bg-[#0f1115]">
+                <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-3 flex items-center gap-2"><i class="ph-fill ph-newspaper"></i> Presse Financière</h3>
+                <div class="space-y-4">
+                    <div class="flex gap-3 cursor-pointer group">
+                        <div class="w-10 h-10 bg-blue-900/50 text-blue-400 flex items-center justify-center font-bold rounded border border-blue-900/30">B</div>
                         <div>
-                            <div class="flex items-center gap-3 mb-2">
-                                <span id="analysis-signal" class="signal-badge signal-hold">...</span>
-                                <span class="text-xs text-gray-500">Horizon: Long Terme</span>
-                            </div>
-                            <p id="analysis-text" class="text-gray-300 text-sm leading-relaxed italic">Chargement...</p>
+                            <div class="flex justify-between text-[9px] text-gray-500 mb-0.5"><span>BLOOMBERG</span><span>5m</span></div>
+                            <h4 class="text-[11px] text-gray-300 group-hover:text-white leading-tight">Marchés asiatiques en hausse suite aux annonces tech.</h4>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 cursor-pointer group">
+                        <div class="w-10 h-10 bg-orange-900/50 text-orange-400 flex items-center justify-center font-bold rounded border border-orange-900/30">R</div>
+                        <div>
+                            <div class="flex justify-between text-[9px] text-gray-500 mb-0.5"><span>REUTERS</span><span>12m</span></div>
+                            <h4 class="text-[11px] text-gray-300 group-hover:text-white leading-tight">Le pétrole se stabilise avant la réunion de l'OPEP.</h4>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- DROITE : News -->
-        <div class="lg:col-span-1 flex flex-col gap-6">
-            <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 h-full flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold flex items-center gap-2 text-yellow-500">
-                        <i data-lucide="rss" size="20"></i> Flux Presse Live
-                    </h3>
-                    <button onclick="generateOfflineNews()" class="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white" title="Actualiser">
-                        <i data-lucide="refresh-cw" size="14"></i>
-                    </button>
-                </div>
-                <div id="news-feed" class="space-y-3 overflow-y-auto custom-scroll flex-1 pr-2"></div>
-                <div class="mt-2 text-[10px] text-gray-600 text-center">Source: Agrégateur Local</div>
-            </div>
-        </div>
+        </aside>
     </div>
 
-    <!-- AUTH MODAL & WIDGETS (STRUCTURE IDENTIQUE) -->
-    <!-- ... Auth Modal and Chat Widget structures are identical to previous stable version ... -->
-    <!-- Pour alléger le code affiché, je réintègre les structures complètes dans le script final -->
-    
-    <!-- AUTH MODAL -->
-    <div id="auth-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x" size="20"></i></button>
-            <div id="login-form">
-                <h2 class="text-2xl font-bold mb-6 text-white flex items-center gap-2"><i data-lucide="log-in"></i> Connexion</h2>
-                <div class="space-y-4">
-                    <div><label class="block text-sm text-gray-400 mb-1">Email</label><input type="email" id="login-email" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none"></div>
-                    <div><label class="block text-sm text-gray-400 mb-1">Mot de passe</label><input type="password" id="login-pass" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none"></div>
-                    <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Se connecter</button>
-                </div>
-                <p class="text-sm text-gray-400 mt-4 text-center">Pas de compte ? <button onclick="toggleAuthMode('register')" class="text-blue-400 hover:underline">Créer un compte</button></p>
-            </div>
-            <div id="register-form" class="hidden">
-                <h2 class="text-2xl font-bold mb-6 text-white flex items-center gap-2"><i data-lucide="user-plus"></i> Inscription</h2>
-                <div class="space-y-4">
-                    <div><label class="block text-sm text-gray-400 mb-1">Email</label><input type="email" id="reg-email" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none"></div>
-                    <div><label class="block text-sm text-gray-400 mb-1">Mot de passe</label><input type="password" id="reg-pass" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none"></div>
-                    <div><label class="block text-sm text-gray-400 mb-1">Confirmation</label><input type="password" id="reg-pass-conf" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none"></div>
-                    <button onclick="initRegistration()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded transition">S'inscrire</button>
-                </div>
-                <p class="text-sm text-gray-400 mt-4 text-center">Déjà un compte ? <button onclick="toggleAuthMode('login')" class="text-purple-400 hover:underline">Se connecter</button></p>
-            </div>
-            <div id="verification-form" class="hidden text-center">
-                <div class="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4"><i data-lucide="mail-check" class="text-green-400" size="32"></i></div>
-                <h2 class="text-2xl font-bold mb-2 text-white">Vérification Email</h2>
-                <p class="text-sm text-gray-400 mb-6">Un code à 6 chiffres a été envoyé à <span id="verify-email-display" class="text-white font-mono">...</span></p>
-                <div class="mb-6"><input type="text" id="verify-code" placeholder="Ex: 123456" maxlength="6" class="w-full text-center text-2xl tracking-widest bg-gray-800 border border-gray-700 rounded p-3 text-white focus:border-green-500 focus:outline-none"><p id="test-code-hint" class="text-xs text-yellow-400 mt-2 font-mono font-bold"></p></div>
-                <button onclick="verifyCode()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Valider mon compte</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- WIDGET CHATBOT -->
-    <div class="chat-widget">
-        <div class="chat-window" id="chatWindow">
-            <div class="chat-header flex justify-between items-center">
-                <div class="flex items-center gap-3"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg"><i data-lucide="bot" size="24" class="text-purple-600"></i></div><div><h4 class="font-bold text-white">NovaBot AI</h4><span class="text-xs text-purple-300 flex items-center gap-1"><span class="w-2 h-2 bg-green-400 rounded-full inline-block animate-pulse"></span> En ligne</span></div></div>
-                <div class="flex items-center gap-2"><button onclick="toggleHistoryView()" class="text-purple-200 hover:text-white p-1 hover:bg-purple-800/50 rounded"><i data-lucide="history" size="20"></i></button><button onclick="toggleChat()" class="text-purple-200 hover:text-white p-1 hover:bg-purple-800/50 rounded"><i data-lucide="x" size="20"></i></button></div>
-            </div>
-            <div class="chat-messages custom-scroll" id="chatMessages"><div class="msg msg-bot">Bonjour ! Je suis <strong>NovaBot AI</strong>. 🤖<br><br>Je peux analyser le Bitcoin, les actions et les matières premières.<br><br>Essayez : "Faut-il acheter de l'Or ?"</div></div>
-            <div id="historyView" class="history-view custom-scroll">
-                <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800/50"><h3 class="font-bold text-white">Historique</h3><button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"><i data-lucide="trash-2" size="12"></i> Effacer tout</button></div>
-                <div id="historyList" class="p-2 space-y-2"></div>
-                <button onclick="toggleHistoryView()" class="m-4 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded text-sm">Retour au chat</button>
-            </div>
-            <div class="p-4 border-t border-gray-700 bg-gray-800"><form id="chatForm" onsubmit="handleChatSubmit(event)" class="flex gap-2"><input type="text" id="chatInput" placeholder="Écrivez votre message..." autocomplete="off" class="flex-1 bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 placeholder-gray-500"><button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-xl transition shadow-lg flex items-center justify-center"><i data-lucide="send" size="20"></i></button></form></div>
-        </div>
-        <button onclick="toggleChat()" class="chat-button group"><i data-lucide="bot" size="32" class="text-white group-hover:rotate-12 transition-transform duration-300"></i></button>
-    </div>
-
+    <!-- JAVASCRIPT : MOTEUR DE DONNÉES RÉELLES -->
     <script>
-        lucide.createIcons();
-
         // --- CONFIGURATION ACTIFS ---
-        const CRYPTO_ASSETS = [
-            { symbol: 'BTC', pair: 'BTCEUR', name: 'Bitcoin', aliases: ['bitcoin', 'btc'] },
-            { symbol: 'ETH', pair: 'ETHEUR', name: 'Ethereum', aliases: ['ethereum', 'eth'] },
-            { symbol: 'SOL', pair: 'SOLEUR', name: 'Solana', aliases: ['solana', 'sol'] },
-            { symbol: 'BNB', pair: 'BNBEUR', name: 'Binance Coin', aliases: ['bnb'] },
-            { symbol: 'XRP', pair: 'XRPEUR', name: 'Ripple', aliases: ['xrp'] }
-        ];
-
-        const STOCK_ASSETS = [
-            { symbol: 'AAPL', name: 'Apple Inc.', aliases: ['apple', 'aapl'] },
-            { symbol: 'MSFT', name: 'Microsoft Corp', aliases: ['microsoft', 'msft'] },
-            { symbol: 'GOOGL', name: 'Alphabet Inc.', aliases: ['google', 'googl'] },
-            { symbol: 'TSLA', name: 'Tesla Inc.', aliases: ['tesla', 'tsla'] },
-            { symbol: 'NVDA', name: 'NVIDIA Corp', aliases: ['nvidia', 'nvda'] },
-            { symbol: 'META', name: 'Meta Platforms', aliases: ['meta', 'facebook'] },
-            { symbol: 'AMZN', name: 'Amazon.com', aliases: ['amazon', 'amzn'] }
-        ];
-
-        const COMMODITY_ASSETS = [
-            { symbol: 'GC=F', name: 'Or (Gold)', aliases: ['or', 'gold', 'xau'] },
-            { symbol: 'SI=F', name: 'Argent (Silver)', aliases: ['argent', 'silver', 'xag'] },
-            { symbol: 'CL=F', name: 'Pétrole (WTI)', aliases: ['petrole', 'oil', 'wti', 'brut'] },
-            { symbol: 'NG=F', name: 'Gaz Naturel', aliases: ['gaz', 'gas', 'natgas'] },
-            { symbol: 'HG=F', name: 'Cuivre (Copper)', aliases: ['cuivre', 'copper'] }
-        ];
-
-        const EXPERT_KNOWLEDGE = {
-            'BTC': { signal: 'ACHETER', risk: 0.05, reason: "Réserve de valeur anti-système.", context: "Monnaie hors d'atteinte des banques centrales." },
-            'ETH': { signal: 'CONSERVER', risk: 0.03, reason: "Infrastructure Web3.", context: "Attention à la volatilité." },
-            'SOL': { signal: 'VENDRE', risk: 0, reason: "Trop centralisé.", context: "Préférez la robustesse." },
-            'AAPL': { signal: 'CONSERVER', risk: 0.04, reason: "Cash machine mais dépendante de la Chine.", context: "Attendre repli." },
-            'MSFT': { signal: 'ACHETER', risk: 0.06, reason: "Monopole naturel Cloud/IA.", context: "Valeur de fond de portefeuille." },
-            'TSLA': { signal: 'VENDRE', risk: 0, reason: "Marges en baisse.", context: "Trop cher." },
-            'GC=F': { signal: 'ACHETER', risk: 0.10, reason: "L'assurance ultime.", context: "L'Or est roi." },
-            'SI=F': { signal: 'ACHETER', risk: 0.05, reason: "Métal industriel.", context: "Forte demande solaire." },
-            'CL=F': { signal: 'CONSERVER', risk: 0.03, reason: "Géopolitique tendue.", context: "Risque récession." },
-            'NG=F': { signal: 'VENDRE', risk: 0, reason: "Volatilité extrême.", context: "Réservé aux pros." },
-            'HG=F': { signal: 'CONSERVER', risk: 0.02, reason: "Indicateur économique.", context: "Si la Chine ralentit, le cuivre chute." },
-            'DEFAULT': { signal: 'NEUTRE', risk: 0.02, reason: "Manque de visibilité.", context: "Restez liquide." }
+        const assets = {
+            crypto: [
+                { id: 'BTCEUR', name: 'Bitcoin', icon: 'ph-currency-btc', color: 'text-orange-500', type: 'crypto' },
+                { id: 'ETHEUR', name: 'Ethereum', icon: 'ph-currency-eth', color: 'text-indigo-400', type: 'crypto' },
+                { id: 'SOLEUR', name: 'Solana', icon: 'ph-lightning', color: 'text-purple-500', type: 'crypto' },
+                { id: 'BNBEUR', name: 'Binance Coin', icon: 'ph-coins', color: 'text-yellow-500', type: 'crypto' },
+                { id: 'XRPEUR', name: 'Ripple', icon: 'ph-waves', color: 'text-blue-400', type: 'crypto' }
+            ],
+            stock: [
+                { id: 'AAPL', name: 'Apple', icon: 'ph-apple-logo', color: 'text-gray-300', type: 'stock' },
+                { id: 'MSFT', name: 'Microsoft', icon: 'ph-microsoft-logo', color: 'text-blue-400', type: 'stock' },
+                { id: 'GOOGL', name: 'Alphabet', icon: 'ph-google-logo', color: 'text-red-400', type: 'stock' },
+                { id: 'TSLA', name: 'Tesla', icon: 'ph-car', color: 'text-red-500', type: 'stock' },
+                { id: 'NVDA', name: 'Nvidia', icon: 'ph-cpu', color: 'text-green-500', type: 'stock' }
+            ],
+            commodity: [
+                { id: 'GC=F', name: 'Or', icon: 'ph-coins', color: 'text-yellow-600', type: 'commodity' },
+                { id: 'SI=F', name: 'Argent', icon: 'ph-coins', color: 'text-gray-400', type: 'commodity' },
+                { id: 'CL=F', name: 'Pétrole', icon: 'ph-drop', color: 'text-black', type: 'commodity' }
+            ]
         };
 
-        let currentCategory = 'crypto';
-        let currentAsset = CRYPTO_ASSETS[0];
-        let currentPriceCache = 0; 
-        let currentChangeCache = 0;
-        let myChart = null;
-        let defaultCapital = 10000;
-        let currentUser = null;
-        let NEWS = [];
+        let currentSymbol = 'BTCEUR';
+        let currentType = 'crypto';
+        let currentInterval = '1d'; // Default timeframe
 
-        // --- FONCTION CLÉ POUR L'AFFICHAGE HEADER ---
-        function renderAssetDetails() {
-            document.getElementById('current-symbol').innerText = currentAsset.symbol;
-            document.getElementById('current-name').innerText = currentAsset.name;
-            
-            const ana = EXPERT_KNOWLEDGE[currentAsset.symbol] || EXPERT_KNOWLEDGE.DEFAULT;
-            const sig = document.getElementById('analysis-signal');
-            if (sig) {
-                sig.innerText = ana.signal;
-                sig.className = `signal-badge ${ana.signal === 'ACHETER' ? 'signal-buy' : (ana.signal === 'VENDRE' ? 'signal-sell' : 'signal-hold')}`;
-                document.getElementById('analysis-text').innerText = ana.reason;
-            }
-        }
+        // --- API FETCH FUNCTIONS ---
 
-        // --- MOTEUR NEWS LOCAL ---
-        function generateOfflineNews() {
-            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const isUp = currentChangeCache >= 0;
-            const trendWord = isUp ? "progresse" : "corrige";
-            
-            const cryptoNews = [
-                { t: `Le ${currentAsset.name} ${trendWord} face à l'incertitude macro`, s: "CoinDesk" },
-                { t: "Régulation : L'Europe précise son cadre pour les actifs numériques", s: "Les Echos" }
-            ];
-            const stockNews = [
-                { t: `Marchés : Le titre ${currentAsset.name} sous surveillance`, s: "Bloomberg" },
-                { t: "Wall Street ouvre en ordre dispersé", s: "Reuters" }
-            ];
-            const commoNews = [
-                { t: "Matières Premières : Tensions sur l'approvisionnement", s: "OilPrice" },
-                { t: "L'Or confirme son statut de valeur refuge", s: "Kitco" }
-            ];
-
-            let source = currentCategory === 'crypto' ? cryptoNews : (currentCategory === 'stocks' ? stockNews : commoNews);
-            
-            NEWS = source.map(i => ({
-                title: i.t,
-                source: i.s + " • " + time,
-                impact: isUp ? "Positif" : "Neutre",
-                url: "https://www.google.com/search?q=" + encodeURIComponent(i.t)
-            }));
-            
-            renderNews();
-        }
-
-        // --- DATA FETCHING ---
-        async function fetchData() {
-            // APPEL EXPLICITE DE L'UPDATE HEADER
-            renderAssetDetails();
-
-            if (currentCategory === 'crypto') {
-                document.getElementById('chart-disclaimer').innerText = "";
-                await fetchBinance(currentAsset.pair);
-            } else {
-                document.getElementById('chart-disclaimer').innerText = "* Données Yahoo Finance (Proxy).";
-                await fetchYahoo(currentAsset.symbol);
-            }
-        }
-
-        async function fetchBinance(s) {
+        // 1. Binance (Crypto) - Prix en direct
+        async function fetchBinancePrice(symbol) {
             try {
-                const r = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`);
-                if(!r.ok) throw new Error('Binance Error');
-                const d = await r.json();
-                currentPriceCache = parseFloat(d.lastPrice);
-                currentChangeCache = parseFloat(d.priceChangePercent);
-                updateUI(d.lastPrice, d.priceChangePercent, d.highPrice, d.lowPrice, d.volume);
-                
-                const k = await fetch(`https://api.binance.com/api/v3/klines?symbol=${s}&interval=1h&limit=24`);
-                const kd = await k.json();
-                renderChart(kd.map(x=>new Date(x[0]).getHours()+'h'), kd.map(x=>parseFloat(x[4])));
-            } catch(e) { console.warn("Binance fetch failed", e); }
-        }
-
-        async function fetchYahoo(s) {
-            try {
-                // Utilisation AllOrigins qui est plus permissif sur les headers
-                const u = `https://query1.finance.yahoo.com/v8/finance/chart/${s}?interval=60m&range=1d&_=${Date.now()}`;
-                const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(u));
-                if(!r.ok) throw new Error('Proxy Error');
-                
-                const json = await r.json();
-                const d = JSON.parse(json.contents);
-                if(!d.chart || !d.chart.result) throw new Error('Yahoo format error');
-
-                const res = d.chart.result[0];
-                const meta = res.meta;
-                const p = meta.regularMarketPrice;
-                const c = ((p - meta.chartPreviousClose)/meta.chartPreviousClose)*100;
-                
-                currentPriceCache = p;
-                currentChangeCache = c;
-                updateUI(p, c, meta.regularMarketDayHigh, meta.regularMarketDayLow, meta.regularMarketVolume);
-                
-                const ts = res.timestamp || [];
-                const qs = res.indicators.quote[0].close || [];
-                const cd = ts.map((t,i)=>({t,c:qs[i]})).filter(x=>x.c!=null).slice(-24);
-                renderChart(cd.map(x=>new Date(x.t*1000).getHours()+'h'), cd.map(x=>x.c));
-            } catch(e) { 
-                console.warn("Yahoo fetch failed", e);
-                updateUI(0, 0, 0, 0, 0); // Reset UI on error
-            }
-        }
-
-        function updateUI(p,c,h,l,v) {
-            const el = document.getElementById('main-price');
-            const curr = currentCategory === 'crypto' ? 'EUR' : 'USD';
-            el.innerText = (p === 0 || isNaN(p)) ? '---' : new Intl.NumberFormat('en-US', { style: 'currency', currency: curr }).format(p);
-            
-            document.getElementById('main-change').innerText = (c === 0 || isNaN(c)) ? '---' : (c>0?'+':'') + parseFloat(c).toFixed(2) + '%';
-            document.getElementById('main-change').className = `text-lg font-medium mt-1 ${c>=0?'text-green-400':'text-red-400'}`;
-            document.getElementById('stat-high').innerText = isNaN(h) ? '---' : parseFloat(h).toFixed(2);
-            document.getElementById('stat-low').innerText = isNaN(l) ? '---' : parseFloat(l).toFixed(2);
-            document.getElementById('stat-vol').innerText = v ? (v>1000000?(v/1000000).toFixed(2)+'M':v) : 'N/A';
-        }
-
-        function renderChart(l,d) {
-            if(myChart) myChart.destroy();
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            const col = d.length > 0 && d[d.length-1]>=d[0] ? '#10B981' : '#EF4444';
-            const grad = ctx.createLinearGradient(0,0,0,300); grad.addColorStop(0, col+'33'); grad.addColorStop(1, 'rgba(0,0,0,0)');
-            myChart = new Chart(ctx, { type:'line', data:{labels:l, datasets:[{data:d, borderColor:col, backgroundColor:grad, borderWidth:2, pointRadius:0, fill:true, tension:0.4}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:false}, scales:{x:{display:false}, y:{position:'right', grid:{color:'#374151'}} }, interaction:{intersect:false, mode:'index'}} });
-        }
-
-        // --- UI LOGIC ---
-        function switchCategory(c) {
-            currentCategory = c;
-            document.getElementById('tab-crypto').className = `flex-1 pb-2 text-xs font-medium transition ${c==='crypto'?'active-tab':'inactive-tab'}`;
-            document.getElementById('tab-stocks').className = `flex-1 pb-2 text-xs font-medium transition ${c==='stocks'?'active-tab':'inactive-tab'}`;
-            document.getElementById('tab-commodities').className = `flex-1 pb-2 text-xs font-medium transition ${c==='commodities'?'active-tab':'inactive-tab'}`;
-            
-            if(c==='crypto') currentAsset = CRYPTO_ASSETS[0];
-            else if(c==='stocks') currentAsset = STOCK_ASSETS[0];
-            else currentAsset = COMMODITY_ASSETS[0];
-            
-            renderAssetList();
-            fetchData();
-            generateOfflineNews();
-        }
-
-        function renderAssetList() {
-            const listEl = document.getElementById('asset-list'); listEl.innerHTML='';
-            let items = currentCategory === 'crypto' ? CRYPTO_ASSETS : (currentCategory === 'stocks' ? STOCK_ASSETS : COMMODITY_ASSETS);
-            items.forEach(a => {
-                const b = document.createElement('button');
-                b.className = `asset-btn w-full text-left p-3 rounded-lg border border-gray-700 hover:bg-gray-800 transition flex justify-between items-center ${a.symbol===currentAsset.symbol?'active':'bg-gray-800/40 text-gray-300'}`;
-                b.onclick = () => { 
-                    currentAsset=a; 
-                    renderAssetList(); // Update active state
-                    renderAssetDetails(); // IMMEDIATE UI UPDATE
-                    fetchData(); 
-                    generateOfflineNews(); 
+                const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
+                if (!res.ok) throw new Error('Network err');
+                const data = await res.json();
+                return {
+                    price: parseFloat(data.lastPrice),
+                    change: parseFloat(data.priceChangePercent),
+                    volume: parseFloat(data.volume)
                 };
-                b.innerHTML = `<div><div class="font-bold">${a.name}</div><div class="text-xs opacity-70">${a.symbol}</div></div>`;
-                listEl.appendChild(b);
-            });
+            } catch (e) { console.error("Binance Price Err:", e); return null; }
         }
 
-        function renderNews() {
-            const c = document.getElementById('news-feed');
-            c.innerHTML = '';
-            NEWS.forEach(n => {
-                const color = n.impact === 'Positif' ? 'text-green-400' : (n.impact === 'Négatif' ? 'text-red-400' : 'text-gray-400');
-                const div = document.createElement('div');
-                div.onclick = () => window.open(n.url, '_blank');
-                div.className = "bg-gray-800 p-3 rounded border-l-4 border-gray-600 block hover:bg-gray-700 transition duration-200 cursor-pointer mb-2";
-                div.style.borderColor = n.impact === 'Positif' ? '#10B981' : (n.impact === 'Négatif' ? '#EF4444' : '#9CA3AF');
-                div.innerHTML = `<div class="flex justify-between text-xs text-gray-500 mb-1"><span class="text-blue-400 font-semibold flex items-center gap-1">${n.source} <i data-lucide="external-link" size="10"></i></span></div><h4 class="text-sm font-medium text-gray-200 mb-1 leading-snug">${n.title}</h4><span class="text-xs ${color} font-bold uppercase">${n.impact}</span>`;
-                c.appendChild(div);
-            });
-            lucide.createIcons();
+        // 2. Yahoo via AllOrigins (Stocks/Commodities) - Prix différé/réel selon dispo
+        async function fetchYahooPrice(symbol) {
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+            const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            try {
+                const res = await fetch(proxy);
+                const json = await res.json();
+                const data = JSON.parse(json.contents);
+                const meta = data.chart.result[0].meta;
+                const price = meta.regularMarketPrice;
+                const prev = meta.chartPreviousClose;
+                const change = ((price - prev) / prev) * 100;
+                return { price, change };
+            } catch (e) { console.error("Yahoo Price Err:", e); return null; }
         }
 
-        // Re-integration des fonctions Auth/Chat/History (non modifiées mais nécessaires)
-        function initAuth() { const s=localStorage.getItem('nova_session'); if(s){ currentUser=JSON.parse(s); updateAuthUI(); } }
-        function openAuthModal(m) { document.getElementById('auth-modal').classList.add('open'); toggleAuthMode(m); }
-        function closeAuthModal() { document.getElementById('auth-modal').classList.remove('open'); }
-        function toggleAuthMode(m) { 
-            ['login-form','register-form','verification-form'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-            if(m==='login') document.getElementById('login-form').classList.remove('hidden');
-            else if(m==='register') document.getElementById('register-form').classList.remove('hidden');
-            else document.getElementById('verification-form').classList.remove('hidden');
+        // 3. Historique Graphique (Binance)
+        async function fetchBinanceKlines(symbol, interval) {
+            // Mapping timeframe UI -> Binance API
+            const map = { '1d': '1h', '1w': '4h', '1mo': '12h', '3mo': '1d', '1y': '1d', 'max': '1w' };
+            const binanceInterval = map[interval] || '1h';
+            
+            try {
+                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${binanceInterval}&limit=1000`);
+                const data = await res.json();
+                return data.map(d => ({
+                    time: d[0] / 1000,
+                    open: parseFloat(d[1]),
+                    high: parseFloat(d[2]),
+                    low: parseFloat(d[3]),
+                    close: parseFloat(d[4]),
+                    volume: parseFloat(d[5]) // Custom field for volume series
+                }));
+            } catch (e) { return []; }
         }
-        function handleLogin() { 
-            const e=document.getElementById('login-email').value, p=document.getElementById('login-pass').value;
-            const u=JSON.parse(localStorage.getItem('nova_users')||'[]').find(x=>x.email===e && x.password===p);
-            if(u) { currentUser=u; localStorage.setItem('nova_session',JSON.stringify(u)); updateAuthUI(); closeAuthModal(); if(document.getElementById('historyView').classList.contains('visible')) loadHistory(); } 
-            else alert("Erreur identifiants");
-        }
-        function initRegistration() {
-            const e=document.getElementById('reg-email').value, p=document.getElementById('reg-pass').value, c=document.getElementById('reg-pass-conf').value;
-            if(!e||!p) return alert("Champs vides");
-            if(p!==c) return alert("Mots de passe différents");
-            const code = Math.floor(100000 + Math.random() * 900000).toString();
-            localStorage.setItem('nova_temp_reg', JSON.stringify({email:e, password:p, code:code}));
-            alert("Code: "+code);
-            document.getElementById('verify-email-display').innerText=e;
-            document.getElementById('test-code-hint').innerText="Code: "+code;
-            toggleAuthMode('verification');
-        }
-        function verifyCode() {
-            const c=document.getElementById('verify-code').value, t=JSON.parse(localStorage.getItem('nova_temp_reg'));
-            if(t && c===t.code) {
-                const users=JSON.parse(localStorage.getItem('nova_users')||'[]');
-                const u={id:Date.now(), email:t.email, password:t.password};
-                users.push(u); localStorage.setItem('nova_users',JSON.stringify(users));
-                currentUser=u; localStorage.setItem('nova_session',JSON.stringify(u));
-                updateAuthUI(); closeAuthModal(); alert("Compte créé !");
-            } else alert("Code incorrect");
-        }
-        function logout() { currentUser=null; localStorage.removeItem('nova_session'); updateAuthUI(); }
-        function updateAuthUI() {
-            if(currentUser) {
-                document.getElementById('auth-section').classList.add('hidden');
-                document.getElementById('user-profile').classList.remove('hidden');
-                document.getElementById('user-profile').classList.add('flex');
-                document.getElementById('user-email-display').innerText=currentUser.email.split('@')[0];
-                document.getElementById('user-initials').innerText=currentUser.email[0].toUpperCase();
-            } else {
-                document.getElementById('auth-section').classList.remove('hidden');
-                document.getElementById('user-profile').classList.add('hidden');
-                document.getElementById('user-profile').classList.remove('flex');
-            }
-        }
-        function toggleChat() { const w=document.getElementById('chatWindow'); w.classList.toggle('open'); if(w.classList.contains('open')) setTimeout(()=>document.getElementById('chatInput').focus(),300); }
-        function handleChatSubmit(e) {
-            e.preventDefault(); const i=document.getElementById('chatInput'); const t=i.value.trim(); if(!t)return;
-            addMessage('user', t); i.value='';
-            setTimeout(() => {
-                const r = generateLocalSmartResponse(t);
-                addMessage('bot', r);
-                if(currentUser) {
-                    const k=`nova_chat_history_${currentUser.id}`, h=JSON.parse(localStorage.getItem(k)||'[]');
-                    h.unshift({timestamp:new Date().toISOString(), userMessage:t, botResponse:r});
-                    localStorage.setItem(k,JSON.stringify(h));
+
+        // 4. Historique Graphique (Yahoo)
+        async function fetchYahooChart(symbol, range) {
+            // Mapping timeframe UI -> Yahoo API
+            // ranges: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
+            // interval: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
+            let yRange = '1mo';
+            let yInterval = '60m';
+
+            if (range === '1d') { yRange = '1d'; yInterval = '5m'; }
+            else if (range === '1w') { yRange = '5d'; yInterval = '15m'; }
+            else if (range === '1mo') { yRange = '1mo'; yInterval = '60m'; }
+            else if (range === '3mo') { yRange = '3mo'; yInterval = '1d'; }
+            else if (range === '1y') { yRange = '1y'; yInterval = '1d'; }
+            else { yRange = '5y'; yInterval = '1wk'; }
+
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yInterval}&range=${yRange}`;
+            const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            
+            try {
+                const res = await fetch(proxy);
+                const json = await res.json();
+                const result = JSON.parse(json.contents).chart.result[0];
+                const timestamps = result.timestamp;
+                const quotes = result.indicators.quote[0];
+                
+                const data = [];
+                for(let i=0; i<timestamps.length; i++) {
+                    if(quotes.open[i] === null) continue; // Skip nulls
+                    data.push({
+                        time: timestamps[i],
+                        open: quotes.open[i],
+                        high: quotes.high[i],
+                        low: quotes.low[i],
+                        close: quotes.close[i],
+                        volume: quotes.volume[i] || 0
+                    });
                 }
-            }, 600);
+                return data;
+            } catch (e) { console.error("Yahoo Chart Err", e); return []; }
         }
-        function addMessage(r,h) {
-            const d=document.createElement('div'); d.className=`msg ${r==='user'?'msg-user':'msg-bot'}`; d.innerHTML=h;
-            const c=document.getElementById('chatMessages'); c.appendChild(d); c.scrollTop=9999;
+
+        // --- INITIALISATION GRAPHIQUE ---
+        const container = document.getElementById('chart-container');
+        const chart = LightweightCharts.createChart(container, {
+            layout: { background: { type: 'solid', color: '#0b0e11' }, textColor: '#6b7280', fontFamily: 'Inter' },
+            grid: { vertLines: { color: '#1f2937', style: 1 }, horzLines: { color: '#1f2937', style: 1 } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            timeScale: { borderColor: '#1f2937', timeVisible: true, secondsVisible: false },
+            rightPriceScale: { borderColor: '#1f2937', scaleMargins: { top: 0.1, bottom: 0.2 } },
+        });
+
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#22c55e', downColor: '#ef4444', borderVisible: false, wickUpColor: '#22c55e', wickDownColor: '#ef4444'
+        });
+        const volumeSeries = chart.addHistogramSeries({
+            color: '#26a69a', priceFormat: { type: 'volume' }, priceScaleId: '',
+        });
+        volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+
+        // Resize
+        new ResizeObserver(entries => {
+            const rect = entries[0].contentRect;
+            chart.applyOptions({ width: rect.width, height: rect.height });
+        }).observe(container.parentElement);
+
+        // --- LOGIQUE PRINCIPALE ---
+
+        // Remplir la Sidebar
+        function renderAssets(type) {
+            const list = document.getElementById('asset-list');
+            list.innerHTML = '';
+            assets[type].forEach(asset => {
+                const el = document.createElement('div');
+                el.className = `group p-2 rounded hover:bg-[#1f2329] flex justify-between items-center cursor-pointer transition border border-transparent hover:border-gray-700 mb-1 ${currentSymbol === asset.id ? 'bg-[#252930] border-blue-500/50' : ''}`;
+                el.onclick = () => loadAsset(asset.id, type);
+                el.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="ph-fill ${asset.icon} ${asset.color} text-lg"></i>
+                        <div><div class="font-bold text-gray-200 text-xs">${asset.id.replace('=F','')}</div><div class="text-[9px] text-gray-500">${asset.name}</div></div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-mono text-gray-300 text-xs" id="price-${asset.id}">...</div>
+                        <div class="text-[9px] font-medium" id="change-${asset.id}">...</div>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+            updateSidebarPrices(); // Trigger fetch immediately
         }
-        function generateLocalSmartResponse(t) {
-            const l=t.toLowerCase();
-            if(l.includes('combien')) return `<strong>💰 Conseil</strong><br>Allocation max conseillée : 5% du capital.`;
-            return `<strong>🔎 Analyse</strong><br>Je surveille ${currentAsset.name}.`;
-        }
-        function toggleHistoryView() { 
-            const v=document.getElementById('historyView'); v.classList.toggle('visible');
-            if(v.classList.contains('visible')) {
-                const l=document.getElementById('historyList'); l.innerHTML='';
-                if(!currentUser) return l.innerHTML='<p class="text-center text-gray-500 text-xs mt-4">Connectez-vous.</p>';
-                const h=JSON.parse(localStorage.getItem(`nova_chat_history_${currentUser.id}`)||'[]');
-                if(!h.length) return l.innerHTML='<p class="text-center text-gray-500 text-xs mt-4">Vide.</p>';
-                h.forEach(x=>{
-                    const d=document.createElement('div'); d.className='history-item bg-gray-800/50 p-2 rounded mb-2 text-xs';
-                    d.innerHTML=`<div class="text-gray-500">${new Date(x.timestamp).toLocaleDateString()}</div><div class="text-white">Me: ${x.userMessage}</div>`;
-                    l.appendChild(d);
-                });
+
+        // Mettre à jour les prix Sidebar
+        async function updateSidebarPrices() {
+            const visibleAssets = assets[currentType]; // Only fetch visible tab assets
+            for (const asset of visibleAssets) {
+                let data = null;
+                if (asset.type === 'crypto') data = await fetchBinancePrice(asset.id);
+                else data = await fetchYahooPrice(asset.id);
+
+                if (data) {
+                    const priceEl = document.getElementById(`price-${asset.id}`);
+                    const changeEl = document.getElementById(`change-${asset.id}`);
+                    if(priceEl) priceEl.innerText = data.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    if(changeEl) {
+                        changeEl.innerText = (data.change > 0 ? '+' : '') + data.change.toFixed(2) + '%';
+                        changeEl.className = `text-[9px] font-medium ${data.change >= 0 ? 'text-green-500' : 'text-red-500'}`;
+                    }
+                }
             }
         }
-        function clearHistory() { if(currentUser && confirm("Effacer ?")) { localStorage.removeItem(`nova_chat_history_${currentUser.id}`); toggleHistoryView(); toggleHistoryView(); } }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initAuth();
-            renderAssetList();
-            generateOfflineNews();
-            fetchData();
-            setInterval(fetchData, 10000);
-            setInterval(generateOfflineNews, 900000);
-        });
+        // Charger un actif dans le graphique
+        async function loadAsset(symbol, type) {
+            currentSymbol = symbol;
+            currentType = type;
+            
+            // Update UI
+            document.getElementById('chart-symbol-name').innerText = symbol.replace('=F', '');
+            document.getElementById('ai-asset-name').innerText = symbol.replace('=F', '');
+            document.getElementById('chart-loader').classList.remove('hidden');
+            renderAssets(type); // Re-render to highlight selection
+
+            // Update Header Price (One shot)
+            let priceData = type === 'crypto' ? await fetchBinancePrice(symbol) : await fetchYahooPrice(symbol);
+            if(priceData) {
+                const el = document.getElementById('chart-price-header');
+                el.innerText = priceData.price.toLocaleString();
+                el.className = `font-mono ml-2 font-bold ${priceData.change >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            }
+
+            // Fetch Chart Data
+            let chartData = [];
+            if (type === 'crypto') {
+                chartData = await fetchBinanceKlines(symbol, currentInterval);
+            } else {
+                chartData = await fetchYahooChart(symbol, currentInterval);
+            }
+
+            // Set Data
+            if (chartData.length > 0) {
+                candleSeries.setData(chartData.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close })));
+                volumeSeries.setData(chartData.map(d => ({ time: d.time, value: d.volume, color: d.close >= d.open ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' })));
+                chart.timeScale().fitContent();
+            }
+            document.getElementById('chart-loader').classList.add('hidden');
+        }
+
+        // Changer Timeframe
+        window.changeTimeframe = function(tf) {
+            currentInterval = tf;
+            // Update buttons
+            document.querySelectorAll('#timeframe-controls button').forEach(b => {
+                b.classList.remove('tf-active', 'text-white');
+                if(b.dataset.tf === tf) b.classList.add('tf-active', 'text-white');
+            });
+            loadAsset(currentSymbol, currentType);
+        };
+
+        // Changer Onglet Sidebar
+        window.filterAssets = function(type) {
+            currentType = type;
+            // Set defaults based on type
+            if(type === 'crypto') currentSymbol = 'BTCEUR';
+            if(type === 'stock') currentSymbol = 'AAPL';
+            if(type === 'commodity') currentSymbol = 'GC=F';
+            renderAssets(type);
+            loadAsset(currentSymbol, type);
+        };
+
+        // Init
+        renderAssets('crypto');
+        loadAsset('BTCEUR', 'crypto'); // Load default
+
+        // Refresh Loop (10s)
+        setInterval(() => {
+            updateSidebarPrices();
+            // Optional: Refresh chart last candle if needed (omitted for simplicity, full reload on interaction)
+        }, 10000);
+
+        // Horloges
+        function updateClocks() {
+            const now = new Date();
+            const fmt = (tz) => new Intl.DateTimeFormat('en-US', {hour:'2-digit', minute:'2-digit', hour12:false, timeZone:tz}).format(now);
+            document.getElementById('time-ny').innerText = fmt('America/New_York');
+            document.getElementById('time-london').innerText = fmt('Europe/London');
+            document.getElementById('time-tokyo').innerText = fmt('Asia/Tokyo');
+        }
+        setInterval(updateClocks, 60000);
+        updateClocks();
+
     </script>
 </body>
 </html>
