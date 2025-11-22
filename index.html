@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovaTrade v6.0 - Free Real Data</title>
+    <title>NovaTrade v8.4.5 - Fix Liens Presse (JS)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -26,44 +26,86 @@
         .signal-sell { background-color: rgba(239, 68, 68, 0.2); color: #F87171; border: 1px solid #EF4444; }
         .signal-hold { background-color: rgba(245, 158, 11, 0.2); color: #FBBF24; border: 1px solid #F59E0B; }
 
-        /* Chatbot Styling */
-        .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 50; display: flex; flex-direction: column; align-items: flex-end; }
+        /* CHATBOT STYLING */
+        .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; align-items: flex-end; }
+        
         .chat-button { 
-            width: 60px; height: 60px; border-radius: 50%; 
-            background: linear-gradient(135deg, #2563EB, #1E40AF); 
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.5);
+            width: 64px; height: 64px; border-radius: 50%; 
+            background: linear-gradient(135deg, #8B5CF6, #6D28D9); 
+            box-shadow: 0 4px 14px rgba(139, 92, 246, 0.5);
             display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; transition: transform 0.2s;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid #A78BFA;
+            z-index: 101;
         }
-        .chat-button:hover { transform: scale(1.1); }
+        .chat-button:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.7); }
         
         .chat-window {
-            width: 380px; height: 600px; background: #111827; 
-            border: 1px solid #374151; border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 350px; height: 500px; background: #111827; 
+            border: 1px solid #4C1D95; border-radius: 16px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
             margin-bottom: 16px; display: flex; flex-direction: column;
-            transform-origin: bottom right; transition: all 0.3s ease;
-            opacity: 0; transform: scale(0.9) translateY(20px); pointer-events: none;
+            transform-origin: bottom right; 
+            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            opacity: 0; transform: scale(0.9) translateY(20px); 
+            visibility: hidden; pointer-events: none;
+            overflow: hidden; position: relative;
         }
-        .chat-window.open { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        .chat-window.open { opacity: 1; transform: scale(1) translateY(0); visibility: visible; pointer-events: auto; }
         
-        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .chat-header { background: linear-gradient(to right, #4C1D95, #6D28D9); padding: 12px 16px; border-bottom: 1px solid #5B21B6; }
         
-        .msg { max-width: 90%; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; position: relative; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #0f1420; }
+        
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .msg-bot { background: #1F2937; color: #E5E7EB; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #374151; }
-        .msg-user { background: #2563EB; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg-user { background: #7C3AED; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
 
-        .bot-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-top: 8px; border-left: 4px solid #3B82F6; }
+        /* Bot Card */
+        .bot-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-top: 8px; border-left: 4px solid #8B5CF6; }
         .bot-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.9em; }
         .bot-label { color: #9CA3AF; font-size: 0.8em; text-transform: uppercase; font-weight: bold; }
         .bot-val { color: white; font-weight: 600; }
         .bot-justification { font-style: italic; color: #D1D5DB; font-size: 0.85em; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
-
+        
         .typing-dot { display: inline-block; width: 6px; height: 6px; background: #9CA3AF; border-radius: 50%; animation: typing 1.4s infinite both; margin: 0 2px; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* AUTH MODAL */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal-content { background: #1F2937; width: 90%; max-width: 400px; border-radius: 16px; border: 1px solid #374151; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; animation: modalSlide 0.3s ease-out; }
+        @keyframes modalSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* HISTORY VIEW */
+        .history-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 20; display: none; flex-direction: column; }
+        .history-view.visible { display: flex; }
+        .history-item { border-bottom: 1px solid #374151; padding: 12px; cursor: pointer; transition: background 0.2s; }
+        .history-item:hover { background: #1F2937; }
+        .save-badge { font-size: 0.7rem; color: #34D399; display: flex; align-items: center; gap: 4px; margin-top: 4px; opacity: 0; transition: opacity 0.5s; }
+        .save-badge.visible { opacity: 1; }
     </style>
 </head>
 <body class="bg-gray-950 text-white font-sans min-h-screen p-4 md:p-6">
+
+    <!-- HEADER & AUTH -->
+    <div class="max-w-7xl mx-auto flex justify-between items-center mb-6 px-4">
+        <div></div> <!-- Spacer -->
+        <div class="flex items-center gap-4">
+            <div id="auth-section">
+                <button onclick="openAuthModal('login')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition font-medium shadow-lg flex items-center gap-2">
+                    <i data-lucide="log-in" size="16"></i> Se connecter
+                </button>
+            </div>
+            <div id="user-profile" class="hidden flex items-center gap-3 bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-xs font-bold" id="user-initials">U</div>
+                <div class="text-sm">
+                    <div class="font-medium" id="user-email-display">User</div>
+                    <button onclick="logout()" class="text-xs text-red-400 hover:text-red-300">Déconnexion</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 pb-20">
         
@@ -73,19 +115,21 @@
                 <h1 class="text-2xl font-bold text-blue-500 flex items-center gap-2">
                     <i data-lucide="activity"></i> NovaTrade
                 </h1>
-                <p class="text-xs text-gray-500 mt-1">v6.0 Free Real Data</p>
+                <p class="text-xs text-gray-500 mt-1">v8.4.5 Fix Liens Presse (JS)</p>
             </div>
 
-            <div class="flex mb-4 border-b border-gray-700">
-                <button onclick="switchCategory('crypto')" id="tab-crypto" class="flex-1 pb-2 text-sm font-medium active-tab transition">Crypto</button>
-                <button onclick="switchCategory('stocks')" id="tab-stocks" class="flex-1 pb-2 text-sm font-medium inactive-tab transition">Actions</button>
+            <!-- ONGLETS DE NAVIGATION -->
+            <div class="flex mb-4 border-b border-gray-700 space-x-1">
+                <button onclick="switchCategory('crypto')" id="tab-crypto" class="flex-1 pb-2 text-xs font-medium active-tab transition">Crypto</button>
+                <button onclick="switchCategory('stocks')" id="tab-stocks" class="flex-1 pb-2 text-xs font-medium inactive-tab transition">Actions</button>
+                <button onclick="switchCategory('commodities')" id="tab-commodities" class="flex-1 pb-2 text-xs font-medium inactive-tab transition">Matières</button>
             </div>
 
             <div id="asset-list" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-2"></div>
             
             <div id="data-source-indicator" class="mt-4 pt-4 border-t border-gray-800 text-xs text-center text-gray-500">
-                <p>Crypto: Binance (Live)</p>
-                <p>Actions: <span class="text-green-500 font-bold">Yahoo Finance (Proxy)</span></p>
+                <p>Données en Temps Réel</p>
+                <p>Binance & Yahoo Finance</p>
             </div>
         </div>
 
@@ -163,46 +207,127 @@
         </div>
     </div>
 
-    <!-- WIDGET CHATBOT INTELLIGENT -->
-    <div class="chat-widget">
-        <div class="chat-window" id="chatWindow">
-            <div class="bg-blue-900 p-4 border-b border-gray-700 rounded-t-xl flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                        <i data-lucide="bot" size="18" class="text-white"></i>
+    <!-- AUTH MODAL AVANCE -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x" size="20"></i></button>
+            
+            <!-- LOGIN -->
+            <div id="login-form">
+                <h2 class="text-2xl font-bold mb-6 text-white flex items-center gap-2"><i data-lucide="log-in"></i> Connexion</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Email</label>
+                        <input type="email" id="login-email" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none">
                     </div>
                     <div>
-                        <h4 class="font-bold text-sm">NovaBot v2.0</h4>
-                        <span class="text-xs text-blue-200 flex items-center gap-1">
-                            <span class="w-2 h-2 bg-green-400 rounded-full inline-block animate-pulse"></span> IA Active
+                        <label class="block text-sm text-gray-400 mb-1">Mot de passe</label>
+                        <input type="password" id="login-pass" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Se connecter</button>
+                </div>
+                <p class="text-sm text-gray-400 mt-4 text-center">Pas de compte ? <button onclick="toggleAuthMode('register')" class="text-blue-400 hover:underline">Créer un compte</button></p>
+            </div>
+
+            <!-- REGISTER -->
+            <div id="register-form" class="hidden">
+                <h2 class="text-2xl font-bold mb-6 text-white flex items-center gap-2"><i data-lucide="user-plus"></i> Inscription</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Email</label>
+                        <input type="email" id="reg-email" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Mot de passe</label>
+                        <input type="password" id="reg-pass" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Confirmation</label>
+                        <input type="password" id="reg-pass-conf" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <button onclick="initRegistration()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded transition">S'inscrire</button>
+                </div>
+                <p class="text-sm text-gray-400 mt-4 text-center">Déjà un compte ? <button onclick="toggleAuthMode('login')" class="text-purple-400 hover:underline">Se connecter</button></p>
+            </div>
+
+            <!-- VERIFICATION -->
+            <div id="verification-form" class="hidden text-center">
+                <div class="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="mail-check" class="text-green-400" size="32"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2 text-white">Vérification Email</h2>
+                <p class="text-sm text-gray-400 mb-6">Un code à 6 chiffres a été envoyé à <span id="verify-email-display" class="text-white font-mono">...</span></p>
+                
+                <div class="mb-6">
+                    <input type="text" id="verify-code" placeholder="Ex: 123456" maxlength="6" 
+                           class="w-full text-center text-2xl tracking-widest bg-gray-800 border border-gray-700 rounded p-3 text-white focus:border-green-500 focus:outline-none">
+                    <!-- Code hint element -->
+                    <p id="test-code-hint" class="text-xs text-yellow-400 mt-2 font-mono font-bold"></p>
+                </div>
+                
+                <button onclick="verifyCode()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Valider mon compte</button>
+                <p class="text-xs text-gray-500 mt-4">Code de simulation affiché ci-dessus pour le test.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIDGET CHATBOT -->
+    <div class="chat-widget">
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <i data-lucide="bot" size="24" class="text-purple-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white">NovaBot AI</h4>
+                        <span class="text-xs text-purple-300 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-green-400 rounded-full inline-block animate-pulse"></span> En ligne
                         </span>
                     </div>
                 </div>
-                <button onclick="toggleChat()" class="text-blue-200 hover:text-white"><i data-lucide="x" size="20"></i></button>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleHistoryView()" class="text-purple-200 hover:text-white p-1 hover:bg-purple-800/50 rounded" title="Historique">
+                        <i data-lucide="history" size="20"></i>
+                    </button>
+                    <button onclick="toggleChat()" class="text-purple-200 hover:text-white p-1 hover:bg-purple-800/50 rounded"><i data-lucide="x" size="20"></i></button>
+                </div>
             </div>
             
+            <!-- VUE DISCUSSION -->
             <div class="chat-messages custom-scroll" id="chatMessages">
                 <div class="msg msg-bot">
-                    Bonjour ! Je suis connecté aux marchés réels via Yahoo Finance. 🌐<br><br>
-                    Essayez :<br>
-                    - "Combien de Tesla acheter avec 2000€ ?"<br>
-                    - "Est-ce le moment pour Bitcoin ?"
+                    Bonjour ! Je suis <strong>NovaBot AI</strong>. 🤖<br><br>
+                    Je peux analyser le Bitcoin, les actions et maintenant les <strong>Matières Premières</strong> (Or, Pétrole...).<br><br>
+                    Essayez : "Faut-il acheter de l'Or ?"
                 </div>
             </div>
 
-            <div class="p-3 border-t border-gray-700 bg-gray-800 rounded-b-xl">
+            <!-- VUE HISTORIQUE -->
+            <div id="historyView" class="history-view custom-scroll">
+                <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
+                    <h3 class="font-bold text-white">Historique</h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300 flex items-center gap-1">
+                        <i data-lucide="trash-2" size="12"></i> Effacer tout
+                    </button>
+                </div>
+                <div id="historyList" class="p-2 space-y-2"></div>
+                <button onclick="toggleHistoryView()" class="m-4 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded text-sm">Retour au chat</button>
+            </div>
+
+            <div class="p-4 border-t border-gray-700 bg-gray-800">
                 <form id="chatForm" onsubmit="handleChatSubmit(event)" class="flex gap-2">
-                    <input type="text" id="chatInput" placeholder="Ex: Acheter du BTC maintenant ?" autocomplete="off"
-                           class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition shadow-lg">
-                        <i data-lucide="send" size="18"></i>
+                    <input type="text" id="chatInput" placeholder="Écrivez votre message..." autocomplete="off"
+                           class="flex-1 bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 placeholder-gray-500">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-xl transition shadow-lg flex items-center justify-center">
+                        <i data-lucide="send" size="20"></i>
                     </button>
                 </form>
             </div>
         </div>
 
-        <button onclick="toggleChat()" class="chat-button">
-            <i data-lucide="message-circle" size="32" class="text-white"></i>
+        <button onclick="toggleChat()" class="chat-button group">
+            <i data-lucide="bot" size="32" class="text-white group-hover:rotate-12 transition-transform duration-300"></i>
         </button>
     </div>
 
@@ -219,266 +344,355 @@
         ];
 
         const STOCK_ASSETS = [
-            { symbol: 'AAPL', name: 'Apple Inc.', aliases: ['apple', 'aapl', 'iphone'] },
-            { symbol: 'MSFT', name: 'Microsoft Corp', aliases: ['microsoft', 'msft', 'windows'] },
-            { symbol: 'GOOGL', name: 'Alphabet Inc.', aliases: ['google', 'googl', 'alphabet'] },
-            { symbol: 'TSLA', name: 'Tesla Inc.', aliases: ['tesla', 'tsla', 'musk'] },
-            { symbol: 'NVDA', name: 'NVIDIA Corp', aliases: ['nvidia', 'nvda', 'ia'] },
+            { symbol: 'AAPL', name: 'Apple Inc.', aliases: ['apple', 'aapl'] },
+            { symbol: 'MSFT', name: 'Microsoft Corp', aliases: ['microsoft', 'msft'] },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.', aliases: ['google', 'googl'] },
+            { symbol: 'TSLA', name: 'Tesla Inc.', aliases: ['tesla', 'tsla'] },
+            { symbol: 'NVDA', name: 'NVIDIA Corp', aliases: ['nvidia', 'nvda'] },
             { symbol: 'META', name: 'Meta Platforms', aliases: ['meta', 'facebook'] },
             { symbol: 'AMZN', name: 'Amazon.com', aliases: ['amazon', 'amzn'] }
         ];
 
-        // --- ANALYSE GAVE ---
-        const EXPERT_ANALYSIS = {
-            'BTC': { signal: 'ACHETER', risk: 0.05, text: "Réserve de valeur hors système bancaire. Indispensable." },
-            'ETH': { signal: 'CONSERVER', risk: 0.03, text: "Corrélation élevée avec le Nasdaq. Utile mais cyclique." },
-            'SOL': { signal: 'VENDRE', risk: 0, text: "Actif trop centralisé et spéculatif. Risque de liquidité." },
-            'AAPL': { signal: 'CONSERVER', risk: 0.04, text: "Pricing power fort, mais dépendance à la Chine critique." },
-            'MSFT': { signal: 'ACHETER', risk: 0.06, text: "Infrastructure du monde numérique. Rente de situation quasi-parfaite." },
-            'TSLA': { signal: 'VENDRE', risk: 0, text: "Marges automobiles sous pression. Valorisation de rêve." },
-            'NVDA': { signal: 'CONSERVER', risk: 0.03, text: "Bulle IA possible. Fondamentaux excellents mais prix excessif." },
-            'META': { signal: 'ACHETER', risk: 0.04, text: "Monétisation incroyable de l'attention humaine. Cash machine." },
-            'AMZN': { signal: 'ACHETER', risk: 0.05, text: "AWS est l'infrastructure du web. Position dominante." },
-            'DEFAULT': { signal: 'NEUTRE', risk: 0.02, text: "Prudence requise. Privilégiez le cash." }
+        const COMMODITY_ASSETS = [
+            { symbol: 'GC=F', name: 'Or (Gold)', aliases: ['or', 'gold', 'xau'] },
+            { symbol: 'SI=F', name: 'Argent (Silver)', aliases: ['argent', 'silver', 'xag'] },
+            { symbol: 'CL=F', name: 'Pétrole (WTI)', aliases: ['petrole', 'oil', 'wti', 'brut'] },
+            { symbol: 'NG=F', name: 'Gaz Naturel', aliases: ['gaz', 'gas', 'natgas'] },
+            { symbol: 'HG=F', name: 'Cuivre (Copper)', aliases: ['cuivre', 'copper'] }
+        ];
+
+        // --- ANALYSE EXPERT GAVE ---
+        const EXPERT_KNOWLEDGE = {
+            'BTC': { signal: 'ACHETER', risk: 0.05, reason: "Réserve de valeur anti-système. L'or numérique.", context: "Monnaie hors d'atteinte des banques centrales." },
+            'ETH': { signal: 'CONSERVER', risk: 0.03, reason: "Infrastructure Web3. Corrélé au Nasdaq.", context: "Volatilité élevée." },
+            'SOL': { signal: 'VENDRE', risk: 0, reason: "Trop centralisé.", context: "Préférez la robustesse." },
+            'AAPL': { signal: 'CONSERVER', risk: 0.04, reason: "Cash machine mais dépendante de la Chine.", context: "Attendre repli." },
+            'MSFT': { signal: 'ACHETER', risk: 0.06, reason: "Monopole naturel Cloud/IA.", context: "Valeur de fond de portefeuille." },
+            'TSLA': { signal: 'VENDRE', risk: 0, reason: "Guerre des prix. Marges en baisse.", context: "Trop cher." },
+            'GC=F': { signal: 'ACHETER', risk: 0.10, reason: "L'assurance ultime contre la dépréciation monétaire.", context: "En période d'inflation ou de guerre, l'Or est roi (barbare)." },
+            'SI=F': { signal: 'ACHETER', risk: 0.05, reason: "L'or du pauvre + métal industriel.", context: "Forte demande pour les panneaux solaires." },
+            'CL=F': { signal: 'CONSERVER', risk: 0.03, reason: "Sang de l'économie. Géopolitique tendue.", context: "Attention à la récession qui baisse la demande." },
+            'NG=F': { signal: 'VENDRE', risk: 0, reason: "Volatilité extrême liée à la météo.", context: "Réservé aux professionnels." },
+            'HG=F': { signal: 'CONSERVER', risk: 0.02, reason: "Docteur Cuivre prédit l'économie.", context: "Si la Chine ralentit, le cuivre chute." },
+            'DEFAULT': { signal: 'NEUTRE', risk: 0.02, reason: "Manque de visibilité.", context: "Restez liquide." }
         };
 
         const NEWS = [
-            { title: "Taux Fed : Powell reste ferme", source: "Bloomberg", impact: "Neutre" },
-            { title: "Chine : Ralentissement confirmé", source: "Financial Times", impact: "Négatif" },
-            { title: "Tech : Résultats supérieurs aux attentes", source: "Reuters", impact: "Positif" },
-            { title: "Inflation Zone Euro : 2.4%", source: "Les Échos", impact: "Positif" }
+            { title: "Or : Nouveau record historique", source: "Bloomberg", impact: "Positif", url: "https://www.bloomberg.com" },
+            { title: "Pétrole : L'OPEP+ maintient les coupes", source: "Reuters", impact: "Positif", url: "https://www.reuters.com" },
+            { title: "Fed : Taux inchangés", source: "Financial Times", impact: "Neutre", url: "https://www.ft.com" },
+            { title: "Tech : Nvidia brille encore", source: "Les Échos", impact: "Positif", url: "https://www.lesechos.fr" }
         ];
 
         // --- VARIABLES GLOBALES ---
         let currentCategory = 'crypto';
         let currentAsset = CRYPTO_ASSETS[0];
         let currentPriceCache = 0; 
+        let currentChangeCache = 0;
         let myChart = null;
         let defaultCapital = 10000;
+        let currentUser = null;
 
-        // --- MOTEUR CHATBOT INTELLIGENT ---
-        function toggleChat() {
-            document.getElementById('chatWindow').classList.toggle('open');
+        // --- AUTHENTIFICATION SECURISEE ---
+        function initAuth() {
+            const storedSession = localStorage.getItem('nova_session');
+            if (storedSession) {
+                currentUser = JSON.parse(storedSession);
+                updateAuthUI();
+            }
         }
 
-        function handleChatSubmit(e) {
-            e.preventDefault();
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if(!text) return;
+        function openAuthModal(mode) {
+            document.getElementById('auth-modal').classList.add('open');
+            toggleAuthMode(mode);
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.remove('open');
+        }
+
+        function toggleAuthMode(mode) {
+            const loginF = document.getElementById('login-form');
+            const regF = document.getElementById('register-form');
+            const verifF = document.getElementById('verification-form');
             
-            addMessage('user', text);
-            input.value = '';
+            loginF.classList.add('hidden');
+            regF.classList.add('hidden');
+            verifF.classList.add('hidden');
+
+            if (mode === 'login') loginF.classList.remove('hidden');
+            else if (mode === 'register') regF.classList.remove('hidden');
+            else if (mode === 'verification') verifF.classList.remove('hidden');
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const users = JSON.parse(localStorage.getItem('nova_users') || '[]');
+            const user = users.find(u => u.email === email && u.password === pass);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('nova_session', JSON.stringify(user));
+                updateAuthUI();
+                closeAuthModal();
+                if(document.getElementById('historyView').classList.contains('visible')) loadHistory();
+            } else {
+                alert("Identifiants incorrects.");
+            }
+        }
+
+        function initRegistration() {
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            const conf = document.getElementById('reg-pass-conf').value;
+
+            if (!email || !pass) { alert("Champs requis."); return; }
+            if (!validateEmail(email)) { alert("❌ Format d'email invalide !"); return; }
+            if (pass !== conf) { alert("Les mots de passe diffèrent."); return; }
+
+            const users = JSON.parse(localStorage.getItem('nova_users') || '[]');
+            if (users.find(u => u.email === email)) { alert("Email déjà utilisé."); return; }
+
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const tempUser = { email, password: pass, code: code, timestamp: Date.now() };
+            localStorage.setItem('nova_temp_reg', JSON.stringify(tempUser));
+
+            alert(`✉️ EMAIL ENVOYÉ !\n\nCode de vérification pour ${email} : ${code}`);
             
-            const loadingId = addMessage('bot', '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>');
+            document.getElementById('verify-email-display').innerText = email;
             
-            setTimeout(() => {
-                document.getElementById(loadingId).remove();
-                const response = generateSmartResponse(text);
-                addMessage('bot', response);
-            }, 800);
+            // AJOUT DU CODE DIRECTEMENT DANS LA MODAL
+            document.getElementById('test-code-hint').innerText = "Code de test : " + code;
+            
+            toggleAuthMode('verification');
         }
 
-        function addMessage(role, html) {
-            const id = 'msg-' + Date.now();
-            const div = document.createElement('div');
-            div.id = id;
-            div.className = `msg ${role === 'user' ? 'msg-user' : 'msg-bot'}`;
-            div.innerHTML = html;
-            const c = document.getElementById('chatMessages');
-            c.appendChild(div);
-            c.scrollTop = c.scrollHeight;
-            return id;
+        function verifyCode() {
+            const inputCode = document.getElementById('verify-code').value;
+            const tempUser = JSON.parse(localStorage.getItem('nova_temp_reg'));
+
+            if (!tempUser) { alert("Session expirée. Recommencez."); toggleAuthMode('register'); return; }
+
+            if (inputCode === tempUser.code) {
+                const users = JSON.parse(localStorage.getItem('nova_users') || '[]');
+                const newUser = { id: Date.now(), email: tempUser.email, password: tempUser.password };
+                users.push(newUser);
+                localStorage.setItem('nova_users', JSON.stringify(users));
+                localStorage.removeItem('nova_temp_reg');
+
+                currentUser = newUser;
+                localStorage.setItem('nova_session', JSON.stringify(newUser));
+                updateAuthUI();
+                closeAuthModal();
+                alert("✅ Compte vérifié et activé avec succès !");
+            } else {
+                alert("❌ Code incorrect.");
+            }
         }
 
-        // --- CERVEAU DU CHATBOT ---
-        function generateSmartResponse(text) {
-            const lower = text.toLowerCase();
-            let asset = [...CRYPTO_ASSETS, ...STOCK_ASSETS].find(a => 
-                a.aliases.some(alias => lower.includes(alias)) || lower.includes(a.symbol.toLowerCase())
-            );
-            if (!asset && (lower.includes('il') || lower.includes('ce'))) asset = currentAsset;
-
-            const amountMatch = text.match(/(\d+([.,]\d+)?)\s*(€|euro|euros|k)/i);
-            let customCapital = amountMatch ? parseFloat(amountMatch[1].replace(',','.')) : null;
-            if(text.includes('k') && customCapital) customCapital *= 1000;
-
-            const analysis = asset ? (EXPERT_ANALYSIS[asset.symbol] || EXPERT_ANALYSIS.DEFAULT) : EXPERT_ANALYSIS.DEFAULT;
-
-            if (lower.includes('combien') || lower.includes('montant') || lower.includes('investir') || lower.includes('taille')) {
-                if (!asset) return "Précisez l'actif. Ex: 'Combien investir sur Tesla ?'";
-                const cap = customCapital || defaultCapital;
-                const allocAmount = analysis.signal === 'VENDRE' ? 0 : cap * analysis.risk;
-                const color = analysis.signal === 'ACHETER' ? 'text-green-400' : (analysis.signal === 'VENDRE' ? 'text-red-400' : 'text-yellow-400');
-                
-                return `<strong>💰 Calcul de Position (${asset.symbol})</strong>
-                        <div class="bot-card">
-                            <div class="bot-row"><span class="bot-label">Capital Réf</span><span class="bot-val">${cap} €</span></div>
-                            <div class="bot-row"><span class="bot-label">Risque Alloué</span><span class="bot-val">${(analysis.risk * 100)}%</span></div>
-                            <div class="bot-row"><span class="bot-label">Montant Conseillé</span><span class="bot-val text-xl ${color}">${allocAmount.toFixed(0)} €</span></div>
-                            <div class="bot-justification">${analysis.text}</div>
-                        </div>`;
-            }
-            if (lower.includes('quand') || lower.includes('moment') || lower.includes('temps') || lower.includes('maintenant')) {
-                if (!asset) return "De quel actif parlez-vous ? Ex: 'Est-ce le bon moment pour BTC ?'";
-                const signalColor = analysis.signal === 'ACHETER' ? 'bot-rec-buy' : (analysis.signal === 'VENDRE' ? 'bot-rec-sell' : 'text-yellow-400');
-                return `<strong>⏰ Analyse Timing (${asset.symbol})</strong>
-                        <div class="bot-card">
-                            <div class="bot-row"><span class="bot-label">Signal Gave</span><span class="bot-val ${signalColor}">${analysis.signal}</span></div>
-                            <div class="bot-row"><span class="bot-label">Tendance Fond.</span><span class="bot-val">${analysis.signal === 'ACHETER' ? 'Haussière' : 'Fragile'}</span></div>
-                            <div class="bot-justification">${analysis.text}</div>
-                        </div>`;
-            }
-            if (lower.includes('stratégie') || lower.includes('répartition') || lower.includes('diversifier')) {
-                return `<strong>📊 Allocation Stratégique Type</strong>
-                        <div class="bot-card">
-                            <div class="bot-row"><span class="bot-label">Actions Qualité (MSFT...)</span><span class="bot-val">40%</span></div>
-                            <div class="bot-row"><span class="bot-label">Or / Bitcoin</span><span class="bot-val">20%</span></div>
-                            <div class="bot-row"><span class="bot-label">Obligations / Cash</span><span class="bot-val">30%</span></div>
-                            <div class="bot-row"><span class="bot-label">Spéculatif</span><span class="bot-val">10%</span></div>
-                            <div class="bot-justification">L'objectif est l'antifragilité.</div>
-                        </div>`;
-            }
-            if (asset) {
-                return `<strong>🔎 Analyse Rapide : ${asset.name}</strong>
-                        <div class="bot-card">
-                            <div class="bot-row"><span class="bot-label">Signal</span><span class="bot-val">${analysis.signal}</span></div>
-                            <div class="bot-justification">${analysis.text}</div>
-                        </div>`;
-            }
-            return "Je n'ai pas compris. Essayez : 'Analyse Tesla' ou 'Combien de BTC avec 1000€ ?'";
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('nova_session');
+            updateAuthUI();
         }
 
-        // --- FETCHING DATA (REAL) ---
+        function updateAuthUI() {
+            const authSection = document.getElementById('auth-section');
+            const userProfile = document.getElementById('user-profile');
+            if (currentUser) {
+                authSection.classList.add('hidden');
+                userProfile.classList.remove('hidden');
+                userProfile.classList.add('flex');
+                document.getElementById('user-email-display').innerText = currentUser.email.split('@')[0];
+                document.getElementById('user-initials').innerText = currentUser.email.charAt(0).toUpperCase();
+            } else {
+                authSection.classList.remove('hidden');
+                userProfile.classList.add('hidden');
+                userProfile.classList.remove('flex');
+            }
+        }
+
+        // --- GESTION HISTORIQUE ---
+        function saveConversation(u, b) { if(currentUser) { 
+            const k = `nova_chat_history_${currentUser.id}`; 
+            const h = JSON.parse(localStorage.getItem(k)||'[]'); 
+            h.unshift({timestamp:new Date().toISOString(), userMessage:u, botResponse:b}); 
+            localStorage.setItem(k, JSON.stringify(h)); 
+        }}
+        function loadHistory() {
+            const l = document.getElementById('historyList'); l.innerHTML='';
+            if(!currentUser) { l.innerHTML='<p class="text-gray-500 text-center mt-4 text-xs">Connectez-vous.</p>'; return; }
+            const h = JSON.parse(localStorage.getItem(`nova_chat_history_${currentUser.id}`)||'[]');
+            if(h.length===0) l.innerHTML='<p class="text-gray-500 text-center mt-4 text-xs">Vide.</p>';
+            h.forEach(i => {
+                const d = new Date(i.timestamp).toLocaleDateString();
+                const div = document.createElement('div');
+                div.className='history-item rounded bg-gray-800/50 p-2 mb-2 text-xs';
+                div.innerHTML=`<div class="text-gray-500">${d}</div><div class="text-white">Me: ${i.userMessage}</div>`;
+                l.appendChild(div);
+            });
+        }
+        function clearHistory() { if(currentUser && confirm("Tout effacer ?")) { localStorage.removeItem(`nova_chat_history_${currentUser.id}`); loadHistory(); } }
+        function toggleHistoryView() { document.getElementById('historyView').classList.toggle('visible'); if(document.getElementById('historyView').classList.contains('visible')) loadHistory(); }
+
+        // --- CHATBOT ---
+        function toggleChat() { const w=document.getElementById('chatWindow'); w.classList.toggle('open'); if(w.classList.contains('open')) setTimeout(()=>document.getElementById('chatInput').focus(),300); }
         
+        function handleChatSubmit(e) {
+            e.preventDefault(); const i=document.getElementById('chatInput'); const t=i.value.trim(); if(!t)return;
+            addMessage('user', t); i.value='';
+            setTimeout(() => {
+                const resp = generateLocalSmartResponse(t);
+                addMessage('bot', resp);
+                if(currentUser) saveConversation(t, resp);
+            }, 600);
+        }
+        function addMessage(r, h) {
+            const d = document.createElement('div'); d.className=`msg ${r==='user'?'msg-user':'msg-bot'}`; d.innerHTML=h;
+            document.getElementById('chatMessages').appendChild(d); document.getElementById('chatMessages').scrollTop=9999;
+        }
+
+        function generateLocalSmartResponse(text) {
+            const lower = text.toLowerCase();
+            const allAssets = [...CRYPTO_ASSETS, ...STOCK_ASSETS, ...COMMODITY_ASSETS];
+            let asset = allAssets.find(a => a.aliases.some(alias => lower.includes(alias)) || lower.includes(a.symbol.toLowerCase()));
+            if(!asset && (lower.includes('il')||lower.includes('ce'))) asset = currentAsset;
+
+            const know = asset ? (EXPERT_KNOWLEDGE[asset.symbol] || EXPERT_KNOWLEDGE.DEFAULT) : EXPERT_KNOWLEDGE.DEFAULT;
+            let price = (asset && asset.symbol === currentAsset.symbol) ? currentPriceCache : 0;
+
+            if(lower.includes('combien') || lower.includes('investir')) {
+                if(!asset) return "Sur quel actif ? Ex: 'Combien sur l'Or ?'";
+                const rec = know.signal === 'VENDRE' ? 0 : defaultCapital * know.risk;
+                return `<strong>💰 Conseil (${asset.name})</strong><br>Risque Gave : ${(know.risk*100)}%<br>Allocation conseillée : ${rec.toFixed(0)}€`;
+            }
+            if(asset) {
+                const pStr = price > 0 ? `Prix: ${price.toFixed(2)}` : "";
+                return `<strong>🔎 Analyse : ${asset.name}</strong><br>${pStr}<br>Signal : ${know.signal}<br><em>${know.reason}</em><br>${know.context}`;
+            }
+            return "Je connais Cryptos, Actions et Matières Premières (Or, Pétrole...).";
+        }
+
+        // --- DATA FETCHING ---
         async function fetchData() {
             document.getElementById('current-symbol').innerText = currentAsset.symbol;
             document.getElementById('current-name').innerText = currentAsset.name;
             
-            const ana = EXPERT_ANALYSIS[currentAsset.symbol] || EXPERT_ANALYSIS.DEFAULT;
+            const ana = EXPERT_KNOWLEDGE[currentAsset.symbol] || EXPERT_KNOWLEDGE.DEFAULT;
             const sig = document.getElementById('analysis-signal');
             sig.innerText = ana.signal;
             sig.className = `signal-badge ${ana.signal === 'ACHETER' ? 'signal-buy' : (ana.signal === 'VENDRE' ? 'signal-sell' : 'signal-hold')}`;
-            document.getElementById('analysis-text').innerText = ana.text;
+            document.getElementById('analysis-text').innerText = ana.reason;
 
             if (currentCategory === 'crypto') {
                 document.getElementById('chart-disclaimer').innerText = "";
                 await fetchBinance(currentAsset.pair);
             } else {
-                document.getElementById('chart-disclaimer').innerText = "* Données Yahoo Finance en temps réel (via proxy). Délai possible.";
+                document.getElementById('chart-disclaimer').innerText = "* Données Yahoo Finance (Proxy). Délai possible.";
                 await fetchYahoo(currentAsset.symbol);
             }
         }
 
-        async function fetchBinance(symbol) {
+        async function fetchBinance(s) {
             try {
-                const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
-                const data = await res.json();
-                currentPriceCache = parseFloat(data.lastPrice);
-                updateUI(data.lastPrice, data.priceChangePercent, data.highPrice, data.lowPrice, data.volume);
-                
-                const kline = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=24`);
-                const kData = await kline.json();
-                renderChart(kData.map(d => new Date(d[0]).getHours() + 'h'), kData.map(d => parseFloat(d[4])));
-            } catch(e) { console.error(e); }
+                const r = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`); const d = await r.json();
+                currentPriceCache = parseFloat(d.lastPrice); updateUI(d.lastPrice, d.priceChangePercent, d.highPrice, d.lowPrice, d.volume);
+                const k = await fetch(`https://api.binance.com/api/v3/klines?symbol=${s}&interval=1h&limit=24`); const kd = await k.json();
+                renderChart(kd.map(x=>new Date(x[0]).getHours()+'h'), kd.map(x=>parseFloat(x[4])));
+            } catch(e) {}
         }
 
-        // 🔥 NO CLES REQUISES - YAHOO FINANCE VIA PROXY "ALLORIGINS" 🔥
-        async function fetchYahoo(symbol) {
+        async function fetchYahoo(s) {
             try {
-                // Proxy pour éviter CORS bloquant
-                const proxyUrl = 'https://api.allorigins.win/get?url=';
-                const targetUrl = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=60m&range=1d&_=${new Date().getTime()}`);
+                const u = `https://query1.finance.yahoo.com/v8/finance/chart/${s}?interval=60m&range=1d&_=${Date.now()}`;
+                const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(u));
                 
-                const response = await fetch(proxyUrl + targetUrl);
-                const wrapper = await response.json();
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
                 
-                if (!wrapper.contents) throw new Error("Proxy Error");
-                const data = JSON.parse(wrapper.contents);
+                const data = await r.json();
                 
                 if (!data.chart || !data.chart.result) throw new Error("Yahoo Data Error");
                 
                 const result = data.chart.result[0];
                 const meta = result.meta;
-                const quotes = result.indicators.quote[0];
                 
                 const price = meta.regularMarketPrice;
                 const prevClose = meta.chartPreviousClose;
                 const changePercent = ((price - prevClose) / prevClose) * 100;
                 
                 currentPriceCache = price;
-                updateUI(price, changePercent, meta.regularMarketDayHigh, meta.regularMarketDayLow, meta.regularMarketVolume); // Yahoo donne le volume USD parfois
+                currentChangeCache = changePercent;
+
+                updateUI(price, changePercent, meta.regularMarketDayHigh, meta.regularMarketDayLow, meta.regularMarketVolume);
                 
-                // Chart Construction
-                const timestamps = result.timestamp;
-                const closes = quotes.close;
+                const timestamps = result.timestamp || [];
+                const indicators = result.indicators.quote[0] || {};
+                const closes = indicators.close || [];
                 
-                // Filter out null values (market closed hours sometimes yield nulls)
-                const cleanData = timestamps.map((t, i) => ({ t, c: closes[i] })).filter(d => d.c != null);
+                const cleanData = timestamps.map((t, i) => ({ t, c: closes[i] }))
+                    .filter(d => d.c != null)
+                    .slice(-24); // Keep last 24 points
                 
-                // Prend les 24 derniers points dispos ou tout le range
-                const chartData = cleanData.slice(-24); 
-                const labels = chartData.map(d => {
-                    const date = new Date(d.t * 1000);
-                    return date.getHours() + 'h';
-                });
-                const values = chartData.map(d => d.c);
-                
-                renderChart(labels, values);
+                renderChart(cleanData.map(d => new Date(d.t * 1000).getHours() + 'h'), cleanData.map(d => d.c));
 
             } catch (e) {
                 console.error("Yahoo Fetch Error", e);
-                updateUI(0, 0, 0, 0, 0);
-                renderChart([], []);
+                // Fallback UI to show error state
+                document.getElementById('main-price').innerText = "Err";
+                document.getElementById('chart-disclaimer').innerText = "Erreur connexion données (Proxy). Réessayez.";
+                document.getElementById('chart-disclaimer').className = "text-red-400 text-xs text-center mt-2";
             }
         }
 
-        function updateUI(p, c, h, l, v) {
-            const priceEl = document.getElementById('main-price');
-            const val = typeof p === 'string' ? parseFloat(p) : p;
-            priceEl.innerText = isNaN(val) ? '--- €' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val); // Actions US en USD
-            if(currentCategory === 'crypto') priceEl.innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val);
+        function updateUI(p,c,h,l,v) {
+            const el = document.getElementById('main-price');
+            const curr = currentCategory === 'crypto' ? 'EUR' : 'USD';
+            el.innerText = isNaN(p) ? '---' : new Intl.NumberFormat('en-US', { style: 'currency', currency: curr }).format(p);
             
-            const changeEl = document.getElementById('main-change');
-            const chg = parseFloat(c);
-            changeEl.innerText = isNaN(chg) ? '--- %' : (chg>0?'+':'') + chg.toFixed(2) + '%';
-            changeEl.className = `text-lg font-medium mt-1 ${chg>=0 ? 'text-green-400' : 'text-red-400'}`;
-            
-            document.getElementById('stat-high').innerText = isNaN(parseFloat(h)) ? '---' : parseFloat(h).toFixed(2);
-            document.getElementById('stat-low').innerText = isNaN(parseFloat(l)) ? '---' : parseFloat(l).toFixed(2);
-            
-            let volStr = v > 1000000 ? (v/1000000).toFixed(2)+'M' : (v/1000).toFixed(2)+'k';
-            if(!v) volStr = "N/A";
-            document.getElementById('stat-vol').innerText = volStr;
+            document.getElementById('main-change').innerText = isNaN(c) ? '---' : (c>0?'+':'') + parseFloat(c).toFixed(2) + '%';
+            document.getElementById('main-change').className = `text-lg font-medium mt-1 ${c>=0?'text-green-400':'text-red-400'}`;
+            document.getElementById('stat-high').innerText = isNaN(h) ? '---' : parseFloat(h).toFixed(2);
+            document.getElementById('stat-low').innerText = isNaN(l) ? '---' : parseFloat(l).toFixed(2);
+            document.getElementById('stat-vol').innerText = v ? (v>1000000?(v/1000000).toFixed(2)+'M':v) : 'N/A';
         }
 
-        function renderChart(lbls, data) {
+        function renderChart(l,d) {
+            if(myChart) myChart.destroy();
             const ctx = document.getElementById('mainChart').getContext('2d');
-            if (myChart) myChart.destroy();
-            const isUp = data.length > 0 && data[data.length-1] >= data[0];
-            const col = isUp ? '#10B981' : '#EF4444';
-            const grad = ctx.createLinearGradient(0,0,0,300);
-            grad.addColorStop(0, isUp ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)');
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            const col = d.length > 0 && d[d.length-1]>=d[0] ? '#10B981' : '#EF4444';
+            const grad = ctx.createLinearGradient(0,0,0,300); grad.addColorStop(0, col+'33'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+            myChart = new Chart(ctx, { type:'line', data:{labels:l, datasets:[{data:d, borderColor:col, backgroundColor:grad, borderWidth:2, pointRadius:0, fill:true, tension:0.4}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:false}, scales:{x:{display:false}, y:{position:'right', grid:{color:'#374151'}} }, interaction:{intersect:false, mode:'index'}} });
+        }
+
+        function switchCategory(c) {
+            currentCategory = c;
+            document.getElementById('tab-crypto').className = `flex-1 pb-2 text-xs font-medium transition ${c==='crypto'?'active-tab':'inactive-tab'}`;
+            document.getElementById('tab-stocks').className = `flex-1 pb-2 text-xs font-medium transition ${c==='stocks'?'active-tab':'inactive-tab'}`;
+            document.getElementById('tab-commodities').className = `flex-1 pb-2 text-xs font-medium transition ${c==='commodities'?'active-tab':'inactive-tab'}`;
             
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels: lbls, datasets: [{ data: data, borderColor: col, backgroundColor: grad, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { position: 'right', grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } } }, interaction: { intersect: false, mode: 'index' } }
-            });
+            if(c==='crypto') currentAsset = CRYPTO_ASSETS[0];
+            else if(c==='stocks') currentAsset = STOCK_ASSETS[0];
+            else currentAsset = COMMODITY_ASSETS[0];
+            
+            renderAssetList();
+            fetchData();
         }
 
         function renderAssetList() {
-            const container = document.getElementById('asset-list');
-            container.innerHTML = '';
-            const list = currentCategory === 'crypto' ? CRYPTO_ASSETS : STOCK_ASSETS;
-            list.forEach(asset => {
-                const btn = document.createElement('button');
-                const isActive = asset.symbol === currentAsset.symbol;
-                btn.className = `asset-btn w-full text-left p-3 rounded-lg border border-gray-700 hover:bg-gray-800 transition flex justify-between items-center ${isActive ? 'active' : 'bg-gray-800/40 text-gray-300'}`;
-                btn.onclick = () => { currentAsset = asset; renderAssetList(); fetchData(); };
-                btn.innerHTML = `<div><div class="font-bold">${asset.symbol}</div><div class="text-xs opacity-70">${asset.name}</div></div>`;
-                container.appendChild(btn);
+            const listEl = document.getElementById('asset-list'); listEl.innerHTML='';
+            let items = currentCategory === 'crypto' ? CRYPTO_ASSETS : (currentCategory === 'stocks' ? STOCK_ASSETS : COMMODITY_ASSETS);
+            items.forEach(a => {
+                const b = document.createElement('button');
+                b.className = `asset-btn w-full text-left p-3 rounded-lg border border-gray-700 hover:bg-gray-800 transition flex justify-between items-center ${a.symbol===currentAsset.symbol?'active':'bg-gray-800/40 text-gray-300'}`;
+                b.onclick = () => { currentAsset=a; renderAssetList(); fetchData(); };
+                b.innerHTML = `<div><div class="font-bold">${a.name}</div><div class="text-xs opacity-70">${a.symbol}</div></div>`;
+                listEl.appendChild(b);
             });
         }
 
@@ -487,30 +701,33 @@
             c.innerHTML = '';
             NEWS.forEach(n => {
                 const color = n.impact === 'Positif' ? 'text-green-400' : (n.impact === 'Négatif' ? 'text-red-400' : 'text-gray-400');
+                
+                // Modification: Utilisation de 'div' avec onclick pour contourner restrictions iframe
                 const div = document.createElement('div');
-                div.className = "bg-gray-800 p-3 rounded border-l-4 border-gray-600";
+                div.onclick = () => window.open(n.url, '_blank');
+                div.className = "bg-gray-800 p-3 rounded border-l-4 border-gray-600 block hover:bg-gray-700 transition duration-200 cursor-pointer";
                 div.style.borderColor = n.impact === 'Positif' ? '#10B981' : (n.impact === 'Négatif' ? '#EF4444' : '#9CA3AF');
-                div.innerHTML = `<div class="flex justify-between text-xs text-gray-500 mb-1"><span class="text-blue-400">${n.source}</span></div><h4 class="text-sm font-medium text-gray-200 mb-1">${n.title}</h4><span class="text-xs ${color} font-bold uppercase">${n.impact}</span>`;
+                
+                div.innerHTML = `
+                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                        <span class="text-blue-400 font-semibold">${n.source} <i data-lucide="external-link" class="inline w-3 h-3 ml-1"></i></span>
+                    </div>
+                    <h4 class="text-sm font-medium text-gray-200 mb-1">${n.title}</h4>
+                    <span class="text-xs ${color} font-bold uppercase">${n.impact}</span>
+                `;
                 c.appendChild(div);
             });
-        }
-
-        function switchCategory(c) { 
-            currentCategory=c; 
-            currentAsset = c==='crypto'?CRYPTO_ASSETS[0]:STOCK_ASSETS[0]; 
-            document.getElementById('tab-crypto').className = c==='crypto'?'flex-1 pb-2 text-sm font-medium active-tab transition':'flex-1 pb-2 text-sm font-medium inactive-tab transition';
-            document.getElementById('tab-stocks').className = c==='stocks'?'flex-1 pb-2 text-sm font-medium active-tab transition':'flex-1 pb-2 text-sm font-medium inactive-tab transition';
-            renderAssetList();
-            fetchData();
+            // Important: Refresh icons after dynamic insertion
+            lucide.createIcons();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            initAuth();
             renderAssetList();
             renderNews();
             fetchData();
-            setInterval(fetchData, 10000); // Rafraichissement toutes les 10s
+            setInterval(fetchData, 10000);
         });
-
     </script>
 </body>
 </html>
